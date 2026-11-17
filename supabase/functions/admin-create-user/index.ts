@@ -145,7 +145,7 @@ async function loadLogoAttachment() {
   ).replace(/\/$/, "")
   const logoUrl =
     Deno.env.get("LOGO_URL")?.trim() ||
-    `${appUrl}/BalanceHome_logo_darkmode.png`
+    `${appUrl}/BalanceHome_logo_lightmode.png`
 
   const res = await fetch(logoUrl)
   if (!res.ok) {
@@ -153,7 +153,7 @@ async function loadLogoAttachment() {
   }
   const content = new Uint8Array(await res.arrayBuffer())
   return {
-    filename: "BalanceHome_logo_darkmode.png",
+    filename: "BalanceHome_logo_lightmode.png",
     content,
     cid: LOGO_CID,
     contentType: "image/png",
@@ -197,9 +197,14 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
     Deno.env.get("APP_URL") ?? "https://balancehomerd.netlify.app"
   ).replace(/\/$/, "")
   const loginUrl = `${appUrl}/login`
-  const safeName = escapeHtml(opts.fullName)
+  const displayHost = appUrl.replace(/^https?:\/\//, "")
+  const firstName =
+    opts.fullName.trim().split(/\s+/).filter(Boolean)[0] || "hola"
+  const safeFirst = escapeHtml(firstName)
   const safeEmail = escapeHtml(opts.toEmail)
   const safePass = escapeHtml(TEMP_PASSWORD)
+  const font =
+    "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -208,74 +213,95 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bienvenido a Balance Home</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f0f4f8;-webkit-font-smoothing:antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;padding:32px 16px;">
+<body style="margin:0;padding:0;background-color:#eceff3;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eceff3;padding:40px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(8,26,51,0.08);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
+          <!-- Logo -->
           <tr>
-            <td align="center" style="background-color:#000000;padding:22px 32px;">
+            <td style="padding:28px 32px 18px;font-family:${font};">
               <img src="cid:${LOGO_CID}"
                    alt="Balance Home"
-                   width="220"
-                   style="display:block;margin:0 auto;width:220px;max-width:80%;height:auto;border:0;outline:none;text-decoration:none;" />
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:36px 32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#081A33;">
-              <p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#00847D;">
-                Bienvenida
-              </p>
-              <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;line-height:1.3;color:#081A33;">
-                ¡Hola, ${safeName}!
-              </h1>
-              <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#2c3e55;">
-                Se creó tu cuenta en <strong style="color:#081A33;">Balance Home</strong>.
-                Ya puedes iniciar sesión con estos datos:
-              </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;background-color:#f5f8fb;border-radius:10px;">
-                <tr>
-                  <td style="padding:18px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                    <p style="margin:0 0 10px;font-size:13px;color:#4a5d78;">
-                      <span style="display:block;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#8a9bb0;margin-bottom:4px;">Correo</span>
-                      <strong style="color:#081A33;font-size:15px;">${safeEmail}</strong>
-                    </p>
-                    <p style="margin:0;font-size:13px;color:#4a5d78;">
-                      <span style="display:block;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#8a9bb0;margin-bottom:4px;">Contraseña temporal</span>
-                      <strong style="color:#081A33;font-size:15px;letter-spacing:0.08em;">${safePass}</strong>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:0 0 28px;font-size:14px;line-height:1.6;color:#4a5d78;">
-                Te recomendamos cambiar la contraseña después del primer acceso.
-              </p>
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 8px;">
-                <tr>
-                  <td align="center" style="border-radius:8px;background-color:#00847D;">
-                    <a href="${loginUrl}"
-                       target="_blank"
-                       style="display:inline-block;padding:14px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
-                      Iniciar sesión
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#8a9bb0;text-align:center;">
-                O copia este enlace:<br>
-                <a href="${loginUrl}" style="color:#00847D;word-break:break-all;text-decoration:underline;">${escapeHtml(loginUrl)}</a>
-              </p>
+                   width="180"
+                   style="display:block;width:180px;max-width:70%;height:auto;border:0;outline:none;text-decoration:none;" />
             </td>
           </tr>
           <tr>
             <td style="padding:0 32px;">
-              <div style="height:1px;background-color:#e8eef4;line-height:1px;font-size:1px;">&nbsp;</div>
+              <div style="height:1px;background-color:#e6ebf0;line-height:1px;font-size:1px;">&nbsp;</div>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:28px 32px 8px;font-family:${font};color:#081A33;">
+              <h1 style="margin:0 0 14px;font-size:28px;font-weight:700;line-height:1.25;color:#081A33;">
+                ¡Hola, ${safeFirst}!
+              </h1>
+              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#4a5d78;">
+                Tu cuenta de Balance Home está lista. Organiza las finanzas, las compras y las tareas de tu hogar en un solo lugar.
+              </p>
+
+              <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6b7c93;">
+                Correo de acceso
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+                <tr>
+                  <td style="padding:14px 16px;background-color:#f3f5f8;border-radius:10px;font-family:${font};font-size:15px;color:#081A33;">
+                    ${safeEmail}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6b7c93;">
+                Contraseña temporal
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+                <tr>
+                  <td style="padding:14px 16px;background-color:#f3f5f8;border-radius:10px;font-family:${font};font-size:15px;font-weight:700;letter-spacing:0.12em;color:#081A33;">
+                    ${safePass}
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                <tr>
+                  <td style="padding:12px 14px;background-color:#fff8e8;border-radius:10px;border:1px solid #f0e0b8;font-family:${font};font-size:13px;line-height:1.5;color:#7a5b12;">
+                    <span style="font-size:15px;line-height:1;">⚠️</span>
+                    &nbsp;Te recomendamos cambiar la contraseña después del primer acceso.
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;">
+                <tr>
+                  <td align="center" style="border-radius:10px;background-color:#00847D;">
+                    <a href="${loginUrl}"
+                       target="_blank"
+                       style="display:block;padding:16px 24px;font-family:${font};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">
+                      Configurar mi cuenta
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#8a9bb0;text-align:center;">
+                Si el botón no funciona, copia y pega el enlace en tu navegador.
+              </p>
+              <p style="margin:0 0 8px;font-size:13px;line-height:1.5;text-align:center;">
+                <a href="${loginUrl}" style="color:#00847D;text-decoration:underline;word-break:break-all;">${escapeHtml(displayHost)}</a>
+              </p>
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-align:center;">
+            <td style="padding:16px 32px 0;">
+              <div style="height:1px;background-color:#e6ebf0;line-height:1px;font-size:1px;">&nbsp;</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 32px 28px;font-family:${font};text-align:center;">
               <p style="margin:0;font-size:12px;line-height:1.5;color:#8a9bb0;">
-                Si no esperabas esta cuenta, ignora este correo.
+                Si no esperabas esta invitación, puedes ignorar este correo.
               </p>
               <p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#a8b5c4;">
                 © Balance Home
@@ -293,7 +319,7 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
     to: opts.toEmail,
     subject: "Bienvenido a Balance Home — tus datos de acceso",
     html,
-    text: `Hola ${opts.fullName}, tu cuenta en Balance Home está lista. Correo: ${opts.toEmail}. Contraseña temporal: ${TEMP_PASSWORD}. Entra en ${loginUrl}`,
+    text: `Hola ${firstName}, tu cuenta de Balance Home está lista. Correo: ${opts.toEmail}. Contraseña temporal: ${TEMP_PASSWORD}. Entra en ${loginUrl}`,
   })
 }
 
