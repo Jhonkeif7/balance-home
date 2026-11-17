@@ -109,9 +109,10 @@ Deno.serve(async (req) => {
       if (profile?.full_name) inviterName = profile.full_name
     }
 
-    const appUrl = (Deno.env.get("APP_URL") ?? "http://localhost:5173").replace(/\/$/, "")
+    const appUrl = (
+      Deno.env.get("APP_URL") ?? "https://balancehomerd.netlify.app"
+    ).replace(/\/$/, "")
     const familyUrl = `${appUrl}/family`
-    const logoUrl = `${appUrl}/BalanceHome_logo_darkmode.png`
     const safeInviter = escapeHtml(inviterName)
     const safeFamily = escapeHtml(familyName)
 
@@ -129,7 +130,7 @@ Deno.serve(async (req) => {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(8,26,51,0.08);">
           <tr>
             <td align="center" style="background-color:#000000;padding:22px 32px;">
-              <img src="${logoUrl}"
+              <img src="cid:${LOGO_CID}"
                    alt="Balance Home"
                    width="220"
                    style="display:block;margin:0 auto;width:220px;max-width:80%;height:auto;border:0;outline:none;text-decoration:none;" />
@@ -206,6 +207,30 @@ Deno.serve(async (req) => {
   }
 })
 
+const LOGO_CID = "bh-logo"
+
+async function loadLogoAttachment() {
+  const appUrl = (
+    Deno.env.get("APP_URL") ?? "https://balancehomerd.netlify.app"
+  ).replace(/\/$/, "")
+  const logoUrl =
+    Deno.env.get("LOGO_URL")?.trim() ||
+    `${appUrl}/BalanceHome_logo_darkmode.png`
+
+  const res = await fetch(logoUrl)
+  if (!res.ok) {
+    throw new Error(`No se pudo cargar el logo (${res.status}): ${logoUrl}`)
+  }
+  const content = new Uint8Array(await res.arrayBuffer())
+  return {
+    filename: "BalanceHome_logo_darkmode.png",
+    content,
+    cid: LOGO_CID,
+    contentType: "image/png",
+    contentDisposition: "inline" as const,
+  }
+}
+
 async function sendGmail(opts: {
   to: string
   subject: string
@@ -218,6 +243,7 @@ async function sendGmail(opts: {
     throw new Error("Faltan secrets GMAIL_USER o GMAIL_APP_PASSWORD")
   }
   const from = Deno.env.get("FROM_EMAIL")?.trim() || `Balance Home <${user}>`
+  const logo = await loadLogoAttachment()
 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -232,6 +258,7 @@ async function sendGmail(opts: {
     subject: opts.subject,
     html: opts.html,
     text: opts.text,
+    attachments: [logo],
   })
 }
 
