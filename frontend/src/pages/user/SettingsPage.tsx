@@ -15,6 +15,7 @@ import {
   Loader2,
   AlertCircle,
   RefreshCcw,
+  UserPlus,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PageContainer } from "@/components/ui/PageContainer"
@@ -39,6 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { NEW_USER_TEMP_PASSWORD } from "@/lib/settings-admin"
 import * as profilesService from "@/services/profiles.service"
 import type { Profile } from "@/services/profiles.service"
 
@@ -260,6 +262,10 @@ function SettingsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createEmail, setCreateEmail] = useState("")
+  const [createName, setCreateName] = useState("")
+  const [creating, setCreating] = useState(false)
   const detailRef = useRef<HTMLDivElement>(null)
 
   const loadProfiles = useCallback(async (silent = false) => {
@@ -405,6 +411,42 @@ function SettingsPage() {
     }
   }
 
+  const resetCreateForm = () => {
+    setCreateEmail("")
+    setCreateName("")
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const email = createEmail.trim()
+    if (!email || creating) return
+    setCreating(true)
+    try {
+      const result = await profilesService.createAuthUser({
+        email,
+        full_name: createName.trim() || undefined,
+      })
+      if (result.emailSent) {
+        toast.success(`Usuario creado. Se envió el correo a ${result.email}`)
+      } else {
+        toast.success(
+          `Usuario creado (${result.email}). Contraseña: ${result.tempPassword}`
+        )
+        if (result.emailError) {
+          toast.warning(`No se pudo enviar el correo: ${result.emailError}`)
+        }
+      }
+      setCreateOpen(false)
+      resetCreateForm()
+      await loadProfiles(true)
+    } catch (err) {
+      console.error(err)
+      toast.error(err instanceof Error ? err.message : "No se pudo crear el usuario")
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const isDirty =
     selectedProfile &&
     (form.full_name !== (selectedProfile.full_name ?? "") ||
@@ -462,9 +504,22 @@ function SettingsPage() {
       <div className="grid gap-4 xl:grid-cols-[1fr_340px] xl:items-start">
         {/* Tabla de perfiles */}
         <Card className="min-w-0 gap-0 border-border/60 py-0">
-          <CardHeader className="border-b border-border/60 px-4 py-4 sm:px-6">
-            <CardTitle className="text-base">Perfiles existentes</CardTitle>
-            <CardDescription>Gestiona la información base de cada usuario</CardDescription>
+          <CardHeader className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+            <div className="space-y-1">
+              <CardTitle className="text-base">Perfiles existentes</CardTitle>
+              <CardDescription>Gestiona la información base de cada usuario</CardDescription>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0 gap-1.5 self-start"
+              onClick={() => {
+                resetCreateForm()
+                setCreateOpen(true)
+              }}
+            >
+              <UserPlus className="h-4 w-4" />
+              Crear usuario
+            </Button>
           </CardHeader>
 
           <CardContent className="space-y-4 px-4 py-4 sm:px-6">
@@ -822,6 +877,72 @@ function SettingsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Crear usuario Auth */}
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          if (creating) return
+          setCreateOpen(open)
+          if (!open) resetCreateForm()
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={(e) => void handleCreateUser(e)}>
+            <DialogHeader>
+              <DialogTitle>Crear usuario</DialogTitle>
+              <DialogDescription>
+                Se creará la cuenta con contraseña temporal{" "}
+                <strong className="font-mono tracking-wide">{NEW_USER_TEMP_PASSWORD}</strong> y se
+                enviará un correo de bienvenida con los datos de acceso.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="create-user-email">Correo</Label>
+                <Input
+                  id="create-user-email"
+                  type="email"
+                  autoComplete="off"
+                  required
+                  value={createEmail}
+                  onChange={(e) => setCreateEmail(e.target.value)}
+                  placeholder="usuario@correo.com"
+                  disabled={creating}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-user-name">Nombre completo</Label>
+                <Input
+                  id="create-user-name"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  placeholder="Opcional"
+                  disabled={creating}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+                disabled={creating}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={creating || !createEmail.trim()}>
+                {creating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="mr-2 h-4 w-4" />
+                )}
+                Crear y enviar correo
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmación de eliminación */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

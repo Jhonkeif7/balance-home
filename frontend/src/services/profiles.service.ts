@@ -87,3 +87,49 @@ export async function deleteProfile(id: string): Promise<void> {
   const { error } = await supabase.from("profiles").delete().eq("id", id)
   if (error) throw error
 }
+
+export interface CreateAuthUserResult {
+  userId: string
+  email: string
+  tempPassword: string
+  emailSent: boolean
+  emailError: string | null
+}
+
+/** Crea usuario Auth vía Edge Function (solo admin de Configuración). */
+export async function createAuthUser(input: {
+  email: string
+  full_name?: string
+}): Promise<CreateAuthUserResult> {
+  const { data, error } = await supabase.functions.invoke("admin-create-user", {
+    body: {
+      email: input.email.trim(),
+      full_name: input.full_name?.trim() || undefined,
+    },
+  })
+
+  if (error) {
+    // functions.invoke a veces mete el body de error en context
+    const ctx = error as { context?: Response }
+    let message = error.message || "No se pudo crear el usuario"
+    try {
+      const body = data ?? (ctx.context ? await ctx.context.json() : null)
+      if (body && typeof body === "object" && "error" in body && typeof body.error === "string") {
+        message = body.error
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message)
+  }
+
+  if (data && typeof data === "object" && "error" in data && data.error) {
+    throw new Error(String(data.error))
+  }
+
+  const result = data as CreateAuthUserResult
+  if (!result?.userId) {
+    throw new Error("Respuesta inválida al crear el usuario")
+  }
+  return result
+}

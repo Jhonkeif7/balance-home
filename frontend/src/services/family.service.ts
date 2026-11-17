@@ -66,23 +66,6 @@ const mapFamily = (r: any): Family => ({
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 })
-
-async function profilesByIds(
-  ids: string[]
-): Promise<Map<string, { full_name: string | null; avatar_url: string | null }>> {
-  const unique = [...new Set(ids.filter(Boolean))]
-  const map = new Map<string, { full_name: string | null; avatar_url: string | null }>()
-  if (unique.length === 0) return map
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url")
-    .in("id", unique)
-  if (error) throw error
-  for (const p of data ?? []) {
-    map.set(p.id, { full_name: p.full_name ?? null, avatar_url: p.avatar_url ?? null })
-  }
-  return map
-}
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** Familia actual del usuario (si pertenece a alguna). */
@@ -241,6 +224,18 @@ export async function searchUsers(query: string): Promise<UserSearchResult[]> {
   }))
 }
 
+/** Nombres/avatars vía RPC (profiles suele estar bloqueado por RLS entre usuarios). */
+async function memberProfilesByFamily(
+  familyId: string
+): Promise<Map<string, { full_name: string | null; avatar_url: string | null }>> {
+  const members = await getMembers(familyId)
+  const map = new Map<string, { full_name: string | null; avatar_url: string | null }>()
+  for (const m of members) {
+    map.set(m.userId, { full_name: m.fullName, avatar_url: m.avatarUrl })
+  }
+  return map
+}
+
 export async function getMessages(familyId: string, limit = 100): Promise<FamilyMessage[]> {
   const { data, error } = await supabase
     .from("family_messages")
@@ -250,7 +245,7 @@ export async function getMessages(familyId: string, limit = 100): Promise<Family
     .limit(limit)
   if (error) throw error
   const rows = data ?? []
-  const profiles = await profilesByIds(rows.map((r) => r.sender_id))
+  const profiles = await memberProfilesByFamily(familyId)
   return rows.map((r) => {
     const p = profiles.get(r.sender_id)
     return {
@@ -270,7 +265,7 @@ export async function sendMessage(body: string): Promise<FamilyMessage> {
   if (error) throw error
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const r: any = data
-  const profiles = await profilesByIds([r.sender_id])
+  const profiles = await memberProfilesByFamily(r.family_id)
   const p = profiles.get(r.sender_id)
   return {
     id: r.id,
@@ -306,17 +301,22 @@ export function subscribeToMessages(
           body: string
           created_at: string
         }
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, avatar_url")
-          .eq("id", row.sender_id)
-          .maybeSingle()
+        let senderName: string | null = null
+        let senderAvatar: string | null = null
+        try {
+          const profiles = await memberProfilesByFamily(familyId)
+          const p = profiles.get(row.sender_id)
+          senderName = p?.full_name ?? null
+          senderAvatar = p?.avatar_url ?? null
+        } catch (err) {
+          console.error(err)
+        }
         onInsert({
           id: row.id,
           familyId: row.family_id,
           senderId: row.sender_id,
-          senderName: profile?.full_name ?? null,
-          senderAvatar: profile?.avatar_url ?? null,
+          senderName,
+          senderAvatar,
           body: row.body,
           createdAt: row.created_at,
         })
