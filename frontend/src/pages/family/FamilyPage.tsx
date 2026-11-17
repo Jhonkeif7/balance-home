@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import {
   Check,
+  ChevronDown,
+  ChevronRight,
   Loader2,
   LogOut,
   Send,
@@ -18,6 +20,14 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmDeleteDialog } from "@/components/ui/ConfirmDeleteDialog"
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 import * as familyService from "@/services/family.service"
 import type {
   Family,
@@ -27,6 +37,101 @@ import type {
 } from "@/services/family.service"
 import { UserSearchSelect } from "./UserSearchSelect"
 import { FamilyChat } from "./FamilyChat"
+
+function MembersList({
+  members,
+  currentUserId,
+}: {
+  members: FamilyMember[]
+  currentUserId?: string
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {members.map((m) => (
+        <div
+          key={m.id}
+          className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+        >
+          <ProfileAvatar
+            name={m.fullName}
+            email={null}
+            avatarUrl={m.avatarUrl}
+            size="sm"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-foreground">
+              {m.fullName ?? "Sin nombre"}
+              {m.userId === currentUserId ? " (tú)" : ""}
+            </p>
+            <Badge variant={m.role === "owner" ? "default" : "secondary"} className="mt-0.5">
+              {m.role === "owner" ? "Propietario" : "Miembro"}
+            </Badge>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function InvitePanel({
+  invitee,
+  onInviteeChange,
+  inviting,
+  onInvite,
+  outgoing,
+  onCancelInvite,
+}: {
+  invitee: UserSearchResult | null
+  onInviteeChange: (v: UserSearchResult | null) => void
+  inviting: boolean
+  onInvite: () => void
+  outgoing: FamilyInvitation[]
+  onCancelInvite: (id: string) => void
+}) {
+  return (
+    <div className="space-y-3">
+      <UserSearchSelect value={invitee} onChange={onInviteeChange} disabled={inviting} />
+      <Button
+        className="w-full"
+        disabled={!invitee || inviting}
+        onClick={onInvite}
+      >
+        {inviting ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="mr-2 h-4 w-4" />
+        )}
+        Enviar invitación
+      </Button>
+
+      {outgoing.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Pendientes
+          </p>
+          {outgoing.map((inv) => (
+            <div
+              key={inv.id}
+              className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-2"
+            >
+              <span className="truncate text-sm">
+                {inv.inviteeName ?? "Usuario"}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 text-muted-foreground hover:text-destructive"
+                onClick={() => onCancelInvite(inv.id)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function FamilyPage() {
   const { user } = useAuth()
@@ -44,6 +149,9 @@ function FamilyPage() {
 
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [leaving, setLeaving] = useState(false)
+
+  const [familyModalOpen, setFamilyModalOpen] = useState(false)
+  const [inviteExpanded, setInviteExpanded] = useState(false)
 
   const myMembership = members.find((m) => m.userId === user?.id)
   const isOwner = myMembership?.role === "owner"
@@ -142,6 +250,7 @@ function FamilyPage() {
       await familyService.leaveFamily()
       toast.success("Saliste de la familia")
       setLeaveOpen(false)
+      setFamilyModalOpen(false)
       await load()
     } catch (err) {
       console.error(err)
@@ -256,115 +365,156 @@ function FamilyPage() {
           </Card>
         ) : (
           <>
-            <Card className="border-border/60">
-              <CardHeader>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <CardTitle className="text-base sm:text-lg">{family.name}</CardTitle>
-                    <CardDescription>
-                      {members.length} miembro{members.length === 1 ? "" : "s"}
-                      {isOwner ? " · Eres el propietario" : ""}
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setLeaveOpen(true)}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Salir de la familia
-                  </Button>
+            {/* —— Móvil: familia colapsada + invitar expandible —— */}
+            <div className="space-y-3 md:hidden">
+              <button
+                type="button"
+                onClick={() => setFamilyModalOpen(true)}
+                className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-card p-3.5 text-left transition-colors hover:bg-muted/40 active:bg-muted/60"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Users className="h-5 w-5" />
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Miembros</h3>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {members.map((m) => (
-                    <div
-                      key={m.id}
-                      className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
-                    >
-                      <ProfileAvatar
-                        name={m.fullName}
-                        email={null}
-                        avatarUrl={m.avatarUrl}
-                        size="sm"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {m.fullName ?? "Sin nombre"}
-                          {m.userId === user?.id ? " (tú)" : ""}
-                        </p>
-                        <Badge variant={m.role === "owner" ? "default" : "secondary"} className="mt-0.5">
-                          {m.role === "owner" ? "Propietario" : "Miembro"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-foreground">{family.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {members.length} miembro{members.length === 1 ? "" : "s"}
+                    {isOwner ? " · Propietario" : ""}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+              </button>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
+                <button
+                  type="button"
+                  onClick={() => setInviteExpanded((v) => !v)}
+                  className="flex w-full items-center gap-3 p-3.5 text-left transition-colors hover:bg-muted/40"
+                  aria-expanded={inviteExpanded}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <UserPlus className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground">Invitar miembro</p>
+                    <p className="text-xs text-muted-foreground">
+                      {outgoing.length > 0
+                        ? `${outgoing.length} pendiente${outgoing.length === 1 ? "" : "s"}`
+                        : "Buscar e invitar por nombre"}
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
+                      inviteExpanded && "rotate-180"
+                    )}
+                  />
+                </button>
+                {inviteExpanded && (
+                  <div className="border-t border-border/60 px-3.5 pb-3.5 pt-3">
+                    <InvitePanel
+                      invitee={invitee}
+                      onInviteeChange={setInvitee}
+                      inviting={inviting}
+                      onInvite={() => void handleInvite()}
+                      outgoing={outgoing}
+                      onCancelInvite={(id) => void handleCancelInvite(id)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {user?.id && <FamilyChat familyId={family.id} currentUserId={user.id} />}
+            </div>
+
+            {/* —— Escritorio: layout completo —— */}
+            <div className="hidden space-y-4 md:block">
               <Card className="border-border/60">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <UserPlus className="h-5 w-5 text-primary" />
-                    Invitar miembro
-                  </CardTitle>
-                  <CardDescription>
-                    Busca por nombre de usuario. Solo aparecen personas sin familia.
-                  </CardDescription>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle className="text-base sm:text-lg">{family.name}</CardTitle>
+                      <CardDescription>
+                        {members.length} miembro{members.length === 1 ? "" : "s"}
+                        {isOwner ? " · Eres el propietario" : ""}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setLeaveOpen(true)}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Salir de la familia
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <UserSearchSelect value={invitee} onChange={setInvitee} disabled={inviting} />
-                  <Button
-                    className="w-full"
-                    disabled={!invitee || inviting}
-                    onClick={() => void handleInvite()}
-                  >
-                    {inviting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="mr-2 h-4 w-4" />
-                    )}
-                    Enviar invitación
-                  </Button>
-
-                  {outgoing.length > 0 && (
-                    <div className="space-y-2 pt-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Pendientes
-                      </p>
-                      {outgoing.map((inv) => (
-                        <div
-                          key={inv.id}
-                          className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-2"
-                        >
-                          <span className="truncate text-sm">
-                            {inv.inviteeName ?? "Usuario"}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="shrink-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => void handleCancelInvite(inv.id)}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <h3 className="text-sm font-semibold text-foreground">Miembros</h3>
+                  <MembersList members={members} currentUserId={user?.id} />
                 </CardContent>
               </Card>
 
-              {user?.id && <FamilyChat familyId={family.id} currentUserId={user.id} />}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card className="border-border/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <UserPlus className="h-5 w-5 text-primary" />
+                      Invitar miembro
+                    </CardTitle>
+                    <CardDescription>
+                      Busca por nombre de usuario. Solo aparecen personas sin familia.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <InvitePanel
+                      invitee={invitee}
+                      onInviteeChange={setInvitee}
+                      inviting={inviting}
+                      onInvite={() => void handleInvite()}
+                      outgoing={outgoing}
+                      onCancelInvite={(id) => void handleCancelInvite(id)}
+                    />
+                  </CardContent>
+                </Card>
+
+                {user?.id && <FamilyChat familyId={family.id} currentUserId={user.id} />}
+              </div>
             </div>
           </>
         )}
       </div>
+
+      {/* Modal móvil: detalle de familia */}
+      <Dialog open={familyModalOpen} onOpenChange={setFamilyModalOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{family?.name ?? "Familia"}</DialogTitle>
+            <DialogDescription>
+              {members.length} miembro{members.length === 1 ? "" : "s"}
+              {isOwner ? " · Eres el propietario" : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Miembros</h3>
+              <MembersList members={members} currentUserId={user?.id} />
+            </div>
+            <Button
+              variant="outline"
+              className="w-full text-destructive hover:text-destructive"
+              onClick={() => {
+                setFamilyModalOpen(false)
+                setLeaveOpen(true)
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Salir de la familia
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDeleteDialog
         open={leaveOpen}

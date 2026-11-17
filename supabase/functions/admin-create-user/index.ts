@@ -137,28 +137,63 @@ Deno.serve(async (req) => {
   }
 })
 
-const LOGO_CID = "bh-logo"
+const LOGO_LIGHT_CID = "bh-logo-light"
+const LOGO_DARK_CID = "bh-logo-dark"
 
-async function loadLogoAttachment() {
-  const appUrl = (
-    Deno.env.get("APP_URL") ?? "https://balancehomerd.netlify.app"
-  ).replace(/\/$/, "")
-  const logoUrl =
-    Deno.env.get("LOGO_URL")?.trim() ||
-    `${appUrl}/BalanceHome_logo_lightmode.png`
-
-  const res = await fetch(logoUrl)
+async function fetchLogoAttachment(
+  url: string,
+  filename: string,
+  cid: string
+) {
+  const res = await fetch(url)
   if (!res.ok) {
-    throw new Error(`No se pudo cargar el logo (${res.status}): ${logoUrl}`)
+    throw new Error(`No se pudo cargar el logo (${res.status}): ${url}`)
   }
   const content = new Uint8Array(await res.arrayBuffer())
   return {
-    filename: "BalanceHome_logo_lightmode.png",
+    filename,
     content,
-    cid: LOGO_CID,
+    cid,
     contentType: "image/png",
     contentDisposition: "inline" as const,
   }
+}
+
+async function loadLogoAttachments() {
+  const appUrl = (
+    Deno.env.get("APP_URL") ?? "https://balancehomerd.netlify.app"
+  ).replace(/\/$/, "")
+  const lightUrl =
+    Deno.env.get("LOGO_URL_LIGHT")?.trim() ||
+    `${appUrl}/BalanceHome_logo_lightmode.png`
+  const darkUrl =
+    Deno.env.get("LOGO_URL_DARK")?.trim() ||
+    `${appUrl}/BalanceHome_logo_darkmode.png`
+
+  return await Promise.all([
+    fetchLogoAttachment(lightUrl, "BalanceHome_logo_lightmode.png", LOGO_LIGHT_CID),
+    fetchLogoAttachment(darkUrl, "BalanceHome_logo_darkmode.png", LOGO_DARK_CID),
+  ])
+}
+
+function logoHeaderHtml(font: string): string {
+  return `<td style="padding:28px 32px 18px;font-family:${font};">
+              <!--[if !mso]><!-->
+              <img class="bh-logo-light"
+                   src="cid:${LOGO_LIGHT_CID}"
+                   alt="Balance Home"
+                   width="220"
+                   style="display:block;width:220px;max-width:85%;height:auto;border:0;outline:none;text-decoration:none;" />
+              <img class="bh-logo-dark"
+                   src="cid:${LOGO_DARK_CID}"
+                   alt="Balance Home"
+                   width="220"
+                   style="display:none;width:220px;max-width:85%;height:auto;border:0;outline:none;text-decoration:none;" />
+              <!--<![endif]-->
+              <!--[if mso]>
+              <img src="cid:${LOGO_LIGHT_CID}" alt="Balance Home" width="220" style="display:block;width:220px;height:auto;border:0;" />
+              <![endif]-->
+            </td>`
 }
 
 async function sendGmail(opts: {
@@ -173,7 +208,7 @@ async function sendGmail(opts: {
     throw new Error("Faltan secrets GMAIL_USER o GMAIL_APP_PASSWORD")
   }
   const from = Deno.env.get("FROM_EMAIL")?.trim() || `Balance Home <${user}>`
-  const logo = await loadLogoAttachment()
+  const logos = await loadLogoAttachments()
 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -188,7 +223,7 @@ async function sendGmail(opts: {
     subject: opts.subject,
     html: opts.html,
     text: opts.text,
-    attachments: [logo],
+    attachments: logos,
   })
 }
 
@@ -197,12 +232,12 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
     Deno.env.get("APP_URL") ?? "https://balancehomerd.netlify.app"
   ).replace(/\/$/, "")
   const loginUrl = `${appUrl}/login`
-  const displayHost = appUrl.replace(/^https?:\/\//, "")
   const firstName =
     opts.fullName.trim().split(/\s+/).filter(Boolean)[0] || "hola"
   const safeFirst = escapeHtml(firstName)
   const safeEmail = escapeHtml(opts.toEmail)
   const safePass = escapeHtml(TEMP_PASSWORD)
+  const safeLoginUrl = escapeHtml(loginUrl)
   const font =
     "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 
@@ -211,21 +246,26 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>Bienvenido a Balance Home</title>
+  <style>
+    :root { color-scheme: light dark; }
+    .bh-logo-dark { display: none !important; max-height: 0 !important; overflow: hidden !important; mso-hide: all; }
+    @media (prefers-color-scheme: dark) {
+      .bh-logo-light { display: none !important; max-height: 0 !important; overflow: hidden !important; }
+      .bh-logo-dark { display: block !important; max-height: none !important; overflow: visible !important; }
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background-color:#eceff3;-webkit-font-smoothing:antialiased;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eceff3;padding:40px 16px;">
     <tr>
       <td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
-          <!-- Logo -->
+          <!-- Logo: light por defecto, dark con prefers-color-scheme -->
           <tr>
-            <td style="padding:28px 32px 18px;font-family:${font};">
-              <img src="cid:${LOGO_CID}"
-                   alt="Balance Home"
-                   width="180"
-                   style="display:block;width:180px;max-width:70%;height:auto;border:0;outline:none;text-decoration:none;" />
-            </td>
+            ${logoHeaderHtml(font)}
           </tr>
           <tr>
             <td style="padding:0 32px;">
@@ -239,10 +279,10 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
                 ¡Hola, ${safeFirst}!
               </h1>
               <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#4a5d78;">
-                Tu cuenta de Balance Home está lista. Organiza las finanzas, las compras y las tareas de tu hogar en un solo lugar.
+                Tu cuenta de <strong style="color:#00847D;">Balance Home</strong> está lista. Organiza las finanzas, las compras y las tareas de tu hogar en un solo lugar.
               </p>
 
-              <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6b7c93;">
+              <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#52657E;">
                 Correo de acceso
               </p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
@@ -253,22 +293,21 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
                 </tr>
               </table>
 
-              <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6b7c93;">
+              <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#52657E;">
                 Contraseña temporal
               </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
                 <tr>
                   <td style="padding:14px 16px;background-color:#f3f5f8;border-radius:10px;font-family:${font};font-size:15px;font-weight:700;letter-spacing:0.12em;color:#081A33;">
                     ${safePass}
                   </td>
                 </tr>
               </table>
-
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
                 <tr>
-                  <td style="padding:12px 14px;background-color:#fff8e8;border-radius:10px;border:1px solid #f0e0b8;font-family:${font};font-size:13px;line-height:1.5;color:#7a5b12;">
-                    <span style="font-size:15px;line-height:1;">⚠️</span>
-                    &nbsp;Te recomendamos cambiar la contraseña después del primer acceso.
+                  <td style="padding:10px 12px;background-color:#fff8e8;border-radius:8px;border:1px solid #f0e0b8;font-family:${font};font-size:13px;line-height:1.5;color:#7a5b12;">
+                    <span style="font-size:14px;line-height:1;">⚠️</span>
+                    &nbsp;Cambia tu contraseña después de iniciar sesión.
                   </td>
                 </tr>
               </table>
@@ -279,17 +318,17 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
                     <a href="${loginUrl}"
                        target="_blank"
                        style="display:block;padding:16px 24px;font-family:${font};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">
-                      Configurar mi cuenta
+                      Iniciar sesión
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#8a9bb0;text-align:center;">
+              <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#52657E;text-align:center;">
                 Si el botón no funciona, copia y pega el enlace en tu navegador.
               </p>
               <p style="margin:0 0 8px;font-size:13px;line-height:1.5;text-align:center;">
-                <a href="${loginUrl}" style="color:#00847D;text-decoration:underline;word-break:break-all;">${escapeHtml(displayHost)}</a>
+                <a href="${loginUrl}" style="color:#00847D;text-decoration:underline;word-break:break-all;">${safeLoginUrl}</a>
               </p>
             </td>
           </tr>
@@ -300,10 +339,10 @@ async function sendWelcomeEmail(opts: { toEmail: string; fullName: string }) {
           </tr>
           <tr>
             <td style="padding:18px 32px 28px;font-family:${font};text-align:center;">
-              <p style="margin:0;font-size:12px;line-height:1.5;color:#8a9bb0;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#52657E;">
                 Si no esperabas esta invitación, puedes ignorar este correo.
               </p>
-              <p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#a8b5c4;">
+              <p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#52657E;">
                 © Balance Home
               </p>
             </td>
