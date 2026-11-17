@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { PageContainer } from "@/components/ui/PageContainer"
 import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
 import CurrencyTab from "./currency-tab"
 import type { Transaction, Category, Account, Budget } from "./currency-tab"
 import * as financeService from "@/services/finance.service"
+import * as profilesService from "@/services/profiles.service"
 import { getUsdExchangeRates } from "@/services/exchange-rate.service"
 import {
   computeBudgetSpent,
@@ -15,23 +17,28 @@ import {
 } from "./finance-calc"
 
 function CurrencyPage() {
+  const { user } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [rates, setRates] = useState<ExchangeRatesMap | null>(null)
+  const [preferredCurrency, setPreferredCurrency] = useState<string | null>(null)
   const [, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
     ;(async () => {
       try {
-        const [acc, cats, txs, buds, rateData] = await Promise.all([
+        const [acc, cats, txs, buds, rateData, profile] = await Promise.all([
           financeService.getAccounts(),
           financeService.getCategories(),
           financeService.getTransactions(),
           financeService.getBudgets(),
           getUsdExchangeRates().catch(() => null),
+          user?.id
+            ? profilesService.getProfileById(user.id).catch(() => null)
+            : Promise.resolve(null),
         ])
         if (!active) return
         setAccounts(acc)
@@ -39,6 +46,9 @@ function CurrencyPage() {
         setTransactions(txs)
         setBudgets(buds)
         if (rateData) setRates(rateData.rates)
+        if (profile?.default_currency) {
+          setPreferredCurrency(profile.default_currency.toUpperCase())
+        }
       } catch (err) {
         console.error(err)
         toast.error("No se pudieron cargar los datos de finanzas")
@@ -49,7 +59,7 @@ function CurrencyPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [user?.id])
 
   const reloadBudgets = async () => {
     try {
@@ -184,11 +194,11 @@ function CurrencyPage() {
   )
 
   const totals: FinanceTotals = useMemo(
-    () => computeFinanceTotals(accountsView, transactions, rates),
-    [accountsView, transactions, rates]
+    () => computeFinanceTotals(accountsView, transactions, rates, undefined, preferredCurrency),
+    [accountsView, transactions, rates, preferredCurrency]
   )
 
-  const budgetCurrency = pickBaseCurrency(accountsView)
+  const budgetCurrency = pickBaseCurrency(accountsView, preferredCurrency)
 
   const budgetsView = useMemo(
     () =>
@@ -228,6 +238,7 @@ function CurrencyPage() {
         deleteCategory={deleteCategory}
         getBudgetPercentage={getBudgetPercentage}
         getBudgetStatus={getBudgetStatus}
+        preferredCurrency={preferredCurrency}
       />
     </PageContainer>
   )

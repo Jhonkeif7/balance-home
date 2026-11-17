@@ -90,6 +90,11 @@ function ShoppingPage() {
     await Promise.all([refreshProducts(), refreshItems()])
   }
 
+  const handleDelete = async (product: Product) => {
+    await shoppingService.deleteProduct(product.id)
+    await Promise.all([refreshProducts(), refreshItems(), refreshMovements()])
+  }
+
   // --- Lista de compras ---
   const handleAddItem = async (product: Product, quantity: number) => {
     await shoppingService.addItem(product.id, quantity)
@@ -160,18 +165,28 @@ function ShoppingPage() {
   return (
     <PageContainer>
       <Tabs defaultValue="inventory" className="gap-4">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="inventory">
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1 sm:inline-flex sm:h-9 sm:w-auto">
+          <TabsTrigger
+            value="inventory"
+            className="flex-col gap-0.5 px-1 py-2 text-[11px] sm:flex-row sm:gap-1.5 sm:px-3 sm:py-1 sm:text-sm"
+          >
             <Package className="h-4 w-4" />
-            <span className="hidden sm:inline">Inventario</span>
+            <span>Inventario</span>
           </TabsTrigger>
-          <TabsTrigger value="list">
+          <TabsTrigger
+            value="list"
+            className="flex-col gap-0.5 px-1 py-2 text-[11px] sm:flex-row sm:gap-1.5 sm:px-3 sm:py-1 sm:text-sm"
+          >
             <ClipboardList className="h-4 w-4" />
+            <span className="sm:hidden">Lista</span>
             <span className="hidden sm:inline">Lista de compras</span>
           </TabsTrigger>
-          <TabsTrigger value="history">
+          <TabsTrigger
+            value="history"
+            className="flex-col gap-0.5 px-1 py-2 text-[11px] sm:flex-row sm:gap-1.5 sm:px-3 sm:py-1 sm:text-sm"
+          >
             <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Historial</span>
+            <span>Historial</span>
           </TabsTrigger>
         </TabsList>
 
@@ -183,6 +198,7 @@ function ShoppingPage() {
             onUpdate={handleUpdate}
             onAdjust={handleAdjust}
             onArchive={handleArchive}
+            onDelete={handleDelete}
             onAddToList={handleAddItem}
           />
         </TabsContent>

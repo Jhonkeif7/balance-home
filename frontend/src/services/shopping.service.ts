@@ -200,6 +200,12 @@ export async function setArchived(productId: string, archived: boolean): Promise
   return mapProduct(data)
 }
 
+/** Elimina el producto y, por CASCADE, sus líneas e historial. Irreversible. */
+export async function deleteProduct(productId: string): Promise<void> {
+  const { error } = await supabase.from("household_products").delete().eq("id", productId)
+  if (error) throw error
+}
+
 // --- Lista de compras -------------------------------------------------------
 
 /** Líneas pendientes (lista activa). */

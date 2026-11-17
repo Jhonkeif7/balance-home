@@ -265,8 +265,8 @@ function ShoppingListTab({
       {/* Sugerencias de reposición */}
       <Card className="border-border/60">
         <CardContent className="space-y-3 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <h3 className="font-semibold text-foreground">Sugerencias de reposición</h3>
               <p className="text-xs text-muted-foreground">
                 {suggestions.length === 0
@@ -277,6 +277,7 @@ function ShoppingListTab({
             <Button
               size="sm"
               variant="secondary"
+              className="h-10 w-full shrink-0 sm:h-9 sm:w-auto"
               onClick={() => void handleAddMissing()}
               disabled={addingMissing || missingToAdd.length === 0}
             >
@@ -322,21 +323,21 @@ function ShoppingListTab({
         </CardContent>
       </Card>
 
-      {/* Barra de acciones */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="grid flex-1 gap-3 sm:grid-cols-[1fr_auto]">
+      {/* Barra de acciones — móvil: búsqueda → select → botones 2×2 */}
+      <div className="space-y-3">
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:gap-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar en la lista…"
-              className="pl-9"
+              className="h-10 pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Buscar en la lista"
             />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por categoría">
+            <SelectTrigger className="h-10 w-full sm:w-44" aria-label="Filtrar por categoría">
               <SelectValue placeholder="Categoría" />
             </SelectTrigger>
             <SelectContent>
@@ -349,22 +350,43 @@ function ShoppingListTab({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Añadir producto
+
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-full sm:h-9 sm:w-auto"
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Añadir</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setNewProductOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo producto
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-full sm:h-9 sm:w-auto"
+            onClick={() => setNewProductOpen(true)}
+          >
+            <Plus className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Nuevo</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-full sm:h-9 sm:w-auto"
+            onClick={handleDownload}
+          >
+            <Download className="mr-2 h-4 w-4 shrink-0" />
             Descargar
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir / PDF
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-full sm:h-9 sm:w-auto"
+            onClick={handlePrint}
+          >
+            <Printer className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Imprimir</span>
           </Button>
         </div>
       </div>
@@ -396,85 +418,99 @@ function ShoppingListTab({
             const isChecked = !!checked[item.id]
             return (
               <Card key={item.id} className="border-border/60 py-0">
-                <CardContent className="flex flex-wrap items-center gap-3 p-3">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 shrink-0 accent-primary"
-                    checked={isChecked}
-                    onChange={(e) => setChecked((prev) => ({ ...prev, [item.id]: e.target.checked }))}
-                    aria-label={`Marcar ${product?.name ?? "producto"} como comprado`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-medium text-foreground">
-                        {product?.name ?? "(producto archivado)"}
-                      </span>
-                      {status && (
-                        <Badge variant={STATUS_META[status].badge} className="shrink-0">
-                          {STATUS_META[status].label}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {product?.category ?? "Sin categoría"} · {product ? unitLabel(product.unit) : ""}
-                    </p>
-                  </div>
-
-                  {/* Cantidad solicitada */}
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-xs text-muted-foreground" htmlFor={`req-${item.id}`}>
-                      Pedir
-                    </label>
-                    <Input
-                      id={`req-${item.id}`}
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      step="any"
-                      defaultValue={String(item.requestedQuantity)}
-                      className="h-8 w-20"
-                      onBlur={(e) => {
-                        const v = parseFloat(e.target.value)
-                        if (!Number.isNaN(v) && v > 0 && v !== item.requestedQuantity) {
-                          void onUpdateQuantity(item, v)
-                        } else {
-                          e.target.value = String(item.requestedQuantity)
-                        }
-                      }}
+                <CardContent className="space-y-3 p-3">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                      checked={isChecked}
+                      onChange={(e) =>
+                        setChecked((prev) => ({ ...prev, [item.id]: e.target.checked }))
+                      }
+                      aria-label={`Marcar ${product?.name ?? "producto"} como comprado`}
                     />
-                    <span className="text-xs text-muted-foreground">
-                      {product ? unitAbbr(product.unit) : ""}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-medium text-foreground">
+                          {product?.name ?? "(producto archivado)"}
+                        </span>
+                        {status && (
+                          <Badge variant={STATUS_META[status].badge} className="shrink-0">
+                            {STATUS_META[status].label}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {product?.category ?? "Sin categoría"} ·{" "}
+                        {product ? unitLabel(product.unit) : ""}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => void onRemoveItem(item)}
+                      aria-label={`Quitar ${product?.name ?? "producto"}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
 
-                  {/* Cantidad real (si marcada) */}
-                  {isChecked && (
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-xs text-muted-foreground" htmlFor={`real-${item.id}`}>
-                        Real
+                  <div
+                    className={`grid gap-2 ${isChecked ? "grid-cols-2" : "grid-cols-1"} sm:flex sm:flex-wrap sm:items-center`}
+                  >
+                    <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5 sm:border-0 sm:bg-transparent sm:p-0">
+                      <label
+                        className="shrink-0 text-xs text-muted-foreground"
+                        htmlFor={`req-${item.id}`}
+                      >
+                        Pedir
                       </label>
                       <Input
-                        id={`real-${item.id}`}
+                        id={`req-${item.id}`}
                         type="number"
                         inputMode="decimal"
                         min="0"
                         step="any"
-                        value={realQty[item.id] ?? String(item.requestedQuantity)}
-                        className="h-8 w-20"
-                        onChange={(e) => setRealQty((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        defaultValue={String(item.requestedQuantity)}
+                        className="h-8 flex-1 sm:w-20 sm:flex-none"
+                        onBlur={(e) => {
+                          const v = parseFloat(e.target.value)
+                          if (!Number.isNaN(v) && v > 0 && v !== item.requestedQuantity) {
+                            void onUpdateQuantity(item, v)
+                          } else {
+                            e.target.value = String(item.requestedQuantity)
+                          }
+                        }}
                       />
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {product ? unitAbbr(product.unit) : ""}
+                      </span>
                     </div>
-                  )}
 
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => void onRemoveItem(item)}
-                    aria-label={`Quitar ${product?.name ?? "producto"}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    {isChecked && (
+                      <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5 sm:border-0 sm:bg-transparent sm:p-0">
+                        <label
+                          className="shrink-0 text-xs text-muted-foreground"
+                          htmlFor={`real-${item.id}`}
+                        >
+                          Real
+                        </label>
+                        <Input
+                          id={`real-${item.id}`}
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          step="any"
+                          value={realQty[item.id] ?? String(item.requestedQuantity)}
+                          className="h-8 flex-1 sm:w-20 sm:flex-none"
+                          onChange={(e) =>
+                            setRealQty((prev) => ({ ...prev, [item.id]: e.target.value }))
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )
@@ -484,11 +520,15 @@ function ShoppingListTab({
 
       {/* Confirmar compra */}
       {allLines.length > 0 && (
-        <div className="sticky bottom-2 flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/95 p-3 shadow-sm backdrop-blur">
-          <p className="text-sm text-muted-foreground">
+        <div className="sticky bottom-2 z-10 flex flex-col gap-2 rounded-lg border border-border/60 bg-background/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-center text-sm text-muted-foreground sm:text-left">
             {selectedLines.length} de {allLines.length} línea(s) seleccionada(s)
           </p>
-          <Button onClick={() => void handleConfirm()} disabled={confirming || selectedLines.length === 0}>
+          <Button
+            className="h-10 w-full sm:h-9 sm:w-auto"
+            onClick={() => void handleConfirm()}
+            disabled={confirming || selectedLines.length === 0}
+          >
             {confirming ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

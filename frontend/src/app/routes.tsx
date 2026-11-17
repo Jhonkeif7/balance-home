@@ -17,6 +17,7 @@ import SettingsPage from "@/pages/user/SettingsPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import ArchivesPage from "@/pages/files/archivos-page";
 import NotePage from "@/pages/notes/notes-page";
+import FamilyPage from "@/pages/family/FamilyPage";
 
 export function AppRoutes() {
     return (
@@ -108,6 +109,18 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 } 
             />
+            {/* Family */}
+            <Route 
+                path="/family" 
+                element={
+                    <ProtectedRoute>
+                        <AppLayout title="Familia" subtitle="Miembros, invitaciones y chat">
+                            <FamilyPage />
+                        </AppLayout>
+                    </ProtectedRoute>
+                } 
+            />
+
             {/* User */}
             <Route 
                 path="/profile" 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Loader2, Trash2 } from "lucide-react"
+import { Loader2, Trash2, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import {
   Dialog,
@@ -18,6 +18,9 @@ interface ConfirmDeleteDialogProps {
   onConfirm: () => void | Promise<void>
   loading?: boolean
   confirmLabel?: string
+  /** Ícono del botón de confirmación (por defecto Trash2). */
+  confirmIcon?: LucideIcon
+  confirmVariant?: "destructive" | "default" | "secondary" | "outline"
 }
 
 export function ConfirmDeleteDialog({
@@ -28,6 +31,8 @@ export function ConfirmDeleteDialog({
   onConfirm,
   loading = false,
   confirmLabel = "Eliminar",
+  confirmIcon: ConfirmIcon = Trash2,
+  confirmVariant = "destructive",
 }: ConfirmDeleteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -40,11 +45,11 @@ export function ConfirmDeleteDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={() => void onConfirm()} disabled={loading}>
+          <Button variant={confirmVariant} onClick={() => void onConfirm()} disabled={loading}>
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Trash2 className="mr-2 h-4 w-4" />
+              <ConfirmIcon className="mr-2 h-4 w-4" />
             )}
             {confirmLabel}
           </Button>

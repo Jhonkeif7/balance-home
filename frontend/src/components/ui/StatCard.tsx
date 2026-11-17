@@ -51,16 +51,16 @@ function StatCard({
     <Card
       className={cn(
         "bg-card/60 backdrop-blur border-border/60 transition-shadow hover:shadow-md",
-        dense && "gap-0 rounded-lg py-0 xl:gap-6 xl:rounded-xl xl:py-6",
+        dense && "gap-0 rounded-lg py-0 xl:gap-2 xl:rounded-xl xl:py-2",
         compact && "gap-0 py-0 rounded-lg",
         className
       )}
     >
       <CardContent
         className={cn(
-          compactOnMobile && "p-2.5 xl:p-6",
-          compact && !compactOnMobile && "p-3 sm:p-3.5",
-          !dense && "p-4 sm:p-6"
+          compactOnMobile && "p-2.5 xl:p-3",
+          compact && !compactOnMobile && "p-2.5 sm:p-3",
+          !dense && "p-2.5 sm:p-3"
         )}
       >
         <div className="flex items-center justify-between gap-2 xl:gap-3">

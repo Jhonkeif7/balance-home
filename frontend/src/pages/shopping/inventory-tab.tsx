@@ -8,6 +8,7 @@ import {
   PackageX,
   Search,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -49,6 +50,7 @@ interface InventoryTabProps {
   onUpdate: (product: Product, values: ProductFormValues) => Promise<void>
   onAdjust: (product: Product, newQuantity: number) => Promise<void>
   onArchive: (product: Product, archived: boolean) => Promise<void>
+  onDelete: (product: Product) => Promise<void>
   onAddToList: (product: Product, quantity: number) => Promise<void>
 }
 
@@ -61,6 +63,7 @@ function InventoryTab({
   onUpdate,
   onAdjust,
   onArchive,
+  onDelete,
   onAddToList,
 }: InventoryTabProps) {
   const [search, setSearch] = useState("")
@@ -77,6 +80,9 @@ function InventoryTab({
 
   const [archiveTarget, setArchiveTarget] = useState<Product | null>(null)
   const [archiving, setArchiving] = useState(false)
+
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const [markingOutId, setMarkingOutId] = useState<string | null>(null)
 
@@ -149,61 +155,83 @@ function InventoryTab({
     }
   }
 
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await onDelete(deleteTarget)
+      toast.success("Producto eliminado")
+      setDeleteTarget(null)
+    } catch (err) {
+      console.error(err)
+      toast.error(err instanceof Error ? err.message : "No se pudo eliminar el producto")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      {/* Filtros */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre…"
-              className="pl-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Buscar producto"
-            />
-          </div>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por categoría">
-              <SelectValue placeholder="Categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-            <SelectTrigger className="w-full sm:w-40" aria-label="Filtrar por estado">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="ok">Disponible</SelectItem>
-              <SelectItem value="low">Por reponer</SelectItem>
-              <SelectItem value="out">Agotado</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Filtros / acciones — móvil: búsqueda → selects → botones */}
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nombre…"
+            className="h-10 pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar producto"
+          />
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={showArchived ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setShowArchived((v) => !v)}
+
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:flex lg:min-w-0 lg:flex-1 lg:items-center">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-10 w-full lg:w-56" aria-label="Filtrar por categoría">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las categorías</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="h-10 w-full lg:w-52" aria-label="Filtrar por estado">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="ok">Disponible</SelectItem>
+                <SelectItem value="low">Por reponer</SelectItem>
+                <SelectItem value="out">Agotado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div
+            className={`grid gap-2 ${showArchived ? "grid-cols-1" : "grid-cols-2"} lg:flex lg:shrink-0 lg:items-center`}
           >
-            <Archive className="mr-2 h-4 w-4" />
-            {showArchived ? "Ver activos" : "Ver archivados"}
-          </Button>
-          {!showArchived && (
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo producto
+            <Button
+              variant={showArchived ? "secondary" : "outline"}
+              size="sm"
+              className="h-10 w-full lg:h-9 lg:w-auto"
+              onClick={() => setShowArchived((v) => !v)}
+            >
+              <Archive className="mr-2 h-4 w-4 shrink-0" />
+              <span className="truncate">{showArchived ? "Ver activos" : "Archivados"}</span>
             </Button>
-          )}
+            {!showArchived && (
+              <Button size="sm" className="h-10 w-full lg:h-9 lg:w-auto" onClick={openCreate}>
+                <Plus className="mr-2 h-4 w-4 shrink-0" />
+                Nuevo producto
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -246,27 +274,38 @@ function InventoryTab({
                         {product.category ?? "Sin categoría"} · {unitLabel(product.unit)}
                       </p>
                     </div>
-                    {!product.archivedAt && (
-                      <div className="group-hover-actions flex shrink-0 items-center">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => openEdit(product)}
-                          aria-label={`Editar ${product.name}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setArchiveTarget(product)}
-                          className="text-muted-foreground hover:text-destructive"
-                          aria-label={`Archivar ${product.name}`}
-                        >
-                          <Archive className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="group-hover-actions flex shrink-0 items-center">
+                      {!product.archivedAt && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => openEdit(product)}
+                            aria-label={`Editar ${product.name}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setArchiveTarget(product)}
+                            className="text-muted-foreground"
+                            aria-label={`Archivar ${product.name}`}
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setDeleteTarget(product)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={`Eliminar ${product.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/40 p-2 text-center">
@@ -294,18 +333,34 @@ function InventoryTab({
                   )}
 
                   {product.archivedAt ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => setArchiveTarget(product)}
-                    >
-                      <ArchiveRestore className="mr-2 h-4 w-4" />
-                      Restaurar
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 w-full"
+                        onClick={() => setArchiveTarget(product)}
+                      >
+                        <ArchiveRestore className="mr-2 h-4 w-4" />
+                        Restaurar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-9 w-full"
+                        onClick={() => setDeleteTarget(product)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </Button>
+                    </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openAdjust(product)}>
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 w-full sm:w-auto"
+                        onClick={() => openAdjust(product)}
+                      >
                         <SlidersHorizontal className="mr-2 h-4 w-4" />
                         Ajustar
                       </Button>
@@ -313,7 +368,7 @@ function InventoryTab({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-muted-foreground hover:text-destructive"
+                          className="h-9 w-full text-muted-foreground hover:text-destructive sm:w-auto"
                           disabled={markingOutId === product.id}
                           onClick={() => void handleMarkOut(product)}
                         >
@@ -329,6 +384,7 @@ function InventoryTab({
                         <Button
                           variant="secondary"
                           size="sm"
+                          className="col-span-2 h-9 w-full sm:col-span-1 sm:w-auto"
                           onClick={() => void handleAddToList(product, suggestion)}
                         >
                           <Plus className="mr-2 h-4 w-4" />
@@ -409,6 +465,24 @@ function InventoryTab({
         onConfirm={handleConfirmArchive}
         loading={archiving}
         confirmLabel={archiveTarget?.archivedAt ? "Restaurar" : "Archivar"}
+        confirmIcon={archiveTarget?.archivedAt ? ArchiveRestore : Archive}
+        confirmVariant="default"
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Eliminar producto"
+        description={
+          <>
+            ¿Eliminar <strong>{deleteTarget?.name}</strong> de forma definitiva? Se borrarán
+            también su historial y cualquier línea de la lista de compras. Esta acción no se
+            puede deshacer.
+          </>
+        }
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        confirmLabel="Eliminar definitivamente"
       />
     </div>
   )

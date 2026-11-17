@@ -1,361 +1,268 @@
-import { useEffect, useState } from "react";
-import { Input } from "../../components/ui/Input";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "../../components/ui/Card";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/Button";
-import { BrandLogo } from "@/components/brand/BrandLogo";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Loader2, Mail, Lock, Sparkles } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useEffect, useState } from "react"
+import { Input } from "@/components/ui/Input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/Button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { BrandLogo, BRAND_ICON } from "@/components/brand/BrandLogo"
+import { toast } from "sonner"
+import { useNavigate } from "react-router-dom"
+import { Eye, EyeOff, Loader2, Mail, Lock, Moon, Sun } from "lucide-react"
+import { useAuth } from "@/lib/auth"
+import { useTheme } from "@/hooks/useTheme"
+import { cn } from "@/lib/utils"
+
+/** Varias casas tenues en el fondo (solo escritorio / tablet). */
+const BG_ICONS = [
+  { top: "8%", left: "6%", size: "9rem", rotate: "-12deg", opacity: 0.07 },
+  { top: "18%", right: "8%", size: "7rem", rotate: "18deg", opacity: 0.06 },
+  { bottom: "12%", left: "10%", size: "11rem", rotate: "8deg", opacity: 0.08 },
+  { bottom: "18%", right: "6%", size: "8.5rem", rotate: "-16deg", opacity: 0.07 },
+  { top: "42%", left: "2%", size: "6rem", rotate: "22deg", opacity: 0.05 },
+  { top: "55%", right: "3%", size: "10rem", rotate: "-8deg", opacity: 0.06 },
+  { top: "70%", left: "28%", size: "5.5rem", rotate: "14deg", opacity: 0.04 },
+  { top: "12%", left: "42%", size: "5rem", rotate: "-20deg", opacity: 0.04 },
+] as const
 
 const LoginPage = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [focusedField, setFocusedField] = useState<string | null>(null);
-    const navigate = useNavigate();
-    const { session, signIn } = useAuth();
-    const oficial_email = "oficial@dailybalance.com";
-    const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
-    const [isOpenModal, setIsOpenModal] = useState(false);
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isOpenModal, setIsOpenModal] = useState(false)
+  const navigate = useNavigate()
+  const { session, signIn } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
-    const isFormValid = email.trim() !== "" && password.trim() !== "";
+  const isFormValid = email.trim() !== "" && password.trim() !== ""
 
-    // Si ya hay sesión activa, evita ver el login de nuevo.
-    useEffect(() => {
-        if (session) navigate("/dashboard", { replace: true });
-    }, [session, navigate]);
+  useEffect(() => {
+    if (session) navigate("/dashboard", { replace: true })
+  }, [session, navigate])
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!isFormValid || isLoading) return
 
-        if (!isFormValid) return;
+    setFormError(null)
+    setIsLoading(true)
 
-        setIsLoading(true);
-
-        try {
-            await signIn(email.trim(), password);
-            toast.success("Inicio de sesión exitoso");
-            navigate("/dashboard", { replace: true });
-        } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Correo o contraseña incorrectos";
-            toast.error(
-                message === "Invalid login credentials"
-                    ? "Correo o contraseña incorrectos"
-                    : message
-            );
-            setIsLoading(false);
-        }
-    };
-
-    const handleRecoverPassword = () => {
-        if (!isRecoveringPassword) {
-            setIsRecoveringPassword(true);
-            setIsOpenModal(true);
-        } else {
-            setIsRecoveringPassword(false);
-            setIsOpenModal(false);
-        }
+    try {
+      await signIn(email.trim(), password)
+      toast.success("Inicio de sesión exitoso")
+      navigate("/dashboard", { replace: true })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Correo o contraseña incorrectos"
+      const friendly =
+        message === "Invalid login credentials"
+          ? "Correo o contraseña incorrectos"
+          : message
+      setFormError(friendly)
+      toast.error(friendly)
+      setIsLoading(false)
     }
-    
-    return (
-        <>
-                <div className="relative flex justify-center items-center min-h-screen overflow-hidden">
-            {/* Fondo con gradiente animado */}
-            <div 
-                className="absolute inset-0 bg-gradient-to-br from-background via-accent/40 to-background"
-                style={{
-                    backgroundSize: "400% 400%",
-                    animation: "gradientShift 15s ease infinite",
+  }
+
+  return (
+    <div className="relative min-h-dvh overflow-x-hidden bg-background text-foreground">
+      {/* Fondo: varios íconos de casa tenues (ocultos en pantallas pequeñas) */}
+      <div
+        className="pointer-events-none absolute inset-0 hidden overflow-hidden md:block"
+        aria-hidden="true"
+      >
+        {BG_ICONS.map((icon, i) => (
+          <img
+            key={i}
+            src={BRAND_ICON}
+            alt=""
+            className="absolute object-contain select-none"
+            style={{
+              top: "top" in icon ? icon.top : undefined,
+              bottom: "bottom" in icon ? icon.bottom : undefined,
+              left: "left" in icon ? icon.left : undefined,
+              right: "right" in icon ? icon.right : undefined,
+              width: icon.size,
+              height: icon.size,
+              opacity: icon.opacity,
+              transform: `rotate(${icon.rotate})`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Toggle de tema (accesible desde el login) */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute top-3 right-3 z-20 text-muted-foreground hover:text-foreground"
+        onClick={toggleTheme}
+        aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      >
+        {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
+
+      {/* Contenedor con scroll vertical (teclado / pantallas bajas) */}
+      <div className="relative z-10 flex min-h-dvh items-center justify-center px-4 py-6 sm:px-6">
+        <div
+          className={cn(
+            "w-full max-w-[440px] rounded-2xl border border-border bg-card text-card-foreground shadow-sm",
+            "p-6 sm:p-8"
+          )}
+        >
+          {/* Logo horizontal según tema */}
+          <BrandLogo className="mb-6 h-14 w-auto max-w-[280px] sm:h-16 sm:max-w-[320px]" />
+
+          <header className="mb-6 space-y-2 text-left">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
+              Inicia sesión
+            </h1>
+            <p className="text-sm font-normal leading-relaxed text-muted-foreground sm:text-base">
+              Accede a tu hogar en{" "}
+              <span className="text-lg font-semibold text-primary sm:text-xl">
+                Balance Home
+              </span>
+              .
+            </p>
+          </header>
+
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-semibold text-foreground">
+                <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Correo electrónico
+              </Label>
+              <Input
+                id="email"
+                name="username"
+                type="email"
+                placeholder="nombre@correo.com"
+                required
+                autoComplete="username"
+                disabled={isLoading}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (formError) setFormError(null)
                 }}
-            />
-            
-            {/* Elementos decorativos flotantes */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div 
-                    className="absolute w-72 h-72 bg-primary/20 rounded-full blur-3xl"
-                    style={{
-                        top: "10%",
-                        left: "10%",
-                        animation: "float 8s ease-in-out infinite",
-                    }}
-                />
-                <div 
-                    className="absolute w-96 h-96 bg-primary/10 rounded-full blur-3xl"
-                    style={{
-                        bottom: "10%",
-                        right: "5%",
-                        animation: "float 10s ease-in-out infinite reverse",
-                    }}
-                />
-                <div 
-                    className="absolute w-64 h-64 bg-primary/10 rounded-full blur-3xl"
-                    style={{
-                        top: "50%",
-                        left: "60%",
-                        animation: "float 12s ease-in-out infinite",
-                    }}
-                />
+                aria-invalid={formError ? true : undefined}
+                className="h-11 bg-muted/40"
+              />
             </div>
 
-            {/* Partículas brillantes */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[...Array(6)].map((_, i) => (
-                    <Sparkles
-                        key={i}
-                        className="absolute text-primary/20"
-                        style={{
-                            width: `${20 + Math.random() * 20}px`,
-                            height: `${20 + Math.random() * 20}px`,
-                            top: `${Math.random() * 100}%`,
-                            left: `${Math.random() * 100}%`,
-                            animation: `twinkle ${3 + Math.random() * 4}s ease-in-out infinite`,
-                            animationDelay: `${Math.random() * 2}s`,
-                        }}
-                    />
-                ))}
-            </div>
-
-            {/* Card principal con glassmorphism */}
-            <Card 
-                className="relative z-10 w-full max-w-sm mx-4 bg-card/80 backdrop-blur-xl border border-border shadow-2xl"
-                style={{
-                    animation: "slideUp 0.6s ease-out",
-                }}
-            >
-                <CardHeader className="flex flex-col items-center justify-center py-4 pb-2">
-                    <div 
-                        className="relative group cursor-pointer"
-                        style={{ animation: "pulse-glow 3s ease-in-out infinite" }}
-                    >
-                        <div className="absolute -inset-1 bg-primary rounded-2xl blur opacity-40 group-hover:opacity-75 transition duration-500" />
-                        <BrandLogo
-                            variant="icon"
-                            className="relative w-20 h-20 rounded-2xl shadow-xl ring-4 ring-primary/20 group-hover:scale-105 transition-transform duration-300"
-                        />
-                    </div>
-                    <CardTitle className="mt-3 text-2xl font-semibold text-foreground">
-                        Inicia sesión
-                    </CardTitle>
-                    <CardDescription className="text-base text-muted-foreground">
-                        Bienvenido a Balance Home
-                    </CardDescription>
-                </CardHeader>
-
-                <CardContent className="pt-2 pb-4">
-                    <form onSubmit={handleSubmit}>
-                        <div className="flex flex-col gap-4">
-                            {/* Campo Email */}
-                            <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-foreground font-medium flex items-center gap-2">
-                                    <Mail className="h-4 w-4" />
-                                    Correo electrónico
-                                </Label>
-                                <div className={`relative transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.02]' : ''}`}>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="tu@correo.com"
-                                        required
-                                        autoComplete="email"
-                                        disabled={isLoading}
-                                        className={`
-                                            h-10 
-                                            placeholder:text-muted-foreground 
-                                            focus:border-ring focus:ring-2 focus:ring-ring/30
-                                            transition-all duration-300
-                                            ${focusedField === 'email' ? 'shadow-lg shadow-primary/20' : ''}
-                                        `}
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        onFocus={() => setFocusedField('email')}
-                                        onBlur={() => setFocusedField(null)}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Campo Contraseña */}
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password" className="text-foreground font-medium flex items-center gap-2">
-                                        <Lock className="h-4 w-4" />
-                                        Contraseña
-                                    </Label>
-                                    <a
-                                        href="#"
-                                        className="ml-auto text-sm text-primary/90 hover:text-primary underline-offset-4 hover:underline transition-colors"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handleRecoverPassword();
-                                        }}
-                                    >
-                                        ¿Olvidaste tu contraseña?
-                                    </a>
-                                </div>
-                                <div className={`relative transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.02]' : ''}`}>
-                                    <Input 
-                                        id="password" 
-                                        type={showPassword ? "text" : "password"} 
-                                        required 
-                                        autoComplete="current-password"
-                                        disabled={isLoading}
-                                        className={`
-                                            h-10 pr-12
-                                            placeholder:text-muted-foreground
-                                            focus:border-ring focus:ring-2 focus:ring-ring/30
-                                            transition-all duration-300
-                                            ${focusedField === 'password' ? 'shadow-lg shadow-primary/20' : ''}
-                                        `}
-                                        value={password} 
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        onFocus={() => setFocusedField('password')}
-                                        onBlur={() => setFocusedField(null)}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-accent text-muted-foreground hover:text-foreground rounded-lg transition-all"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                                        disabled={isLoading}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-5 w-5" aria-hidden="true" />
-                                        ) : (
-                                            <Eye className="h-5 w-5" aria-hidden="true" />
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Botón de envío */}
-                            <Button 
-                                type="submit" 
-                                className="relative h-10 w-full mt-1 shadow-lg hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]"
-                                disabled={!isFormValid || isLoading}
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
-                                        Iniciando sesión...
-                                    </>
-                                ) : (
-                                    "Iniciar sesión"
-                                )}
-                            </Button>
-                        </div>
-                    </form>
-                </CardContent>
-
-                <CardFooter className="flex-col gap-3 pt-0 pb-4">
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="flex-1 h-px bg-border" />
-                        <span className="text-muted-foreground text-xs">o</span>
-                        <div className="flex-1 h-px bg-border" />
-                    </div>
-                    
-                    {/* <Button 
-                        variant="outline" 
-                        className="w-full h-9 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:text-white transition-all text-sm"
-                    >
-                        Crear una cuenta
-                    </Button> */}
-
-                    {/* Credenciales de prueba */}
-                    <div className="w-full p-3 rounded-lg bg-muted/50 border border-border">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Sparkles className="h-3 w-3 text-primary" />
-                            <span className="text-xs font-medium text-foreground">Credenciales de prueba</span>
-                        </div>
-                        <div className="space-y-0.5 text-xs text-muted-foreground">
-                            <p><span className="text-muted-foreground/80">Correo:</span> {oficial_email}</p>
-                            <p><span className="text-muted-foreground/80">Contraseña:</span> la definida en Supabase</p>
-                        </div>
-                    </div>
-                </CardFooter>
-            </Card>
-
-            {/* Estilos CSS para animaciones */}
-            <style>{`
-                @keyframes gradientShift {
-                    0%, 100% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                }
-                
-                @keyframes float {
-                    0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(5deg); }
-                }
-                
-                @keyframes twinkle {
-                    0%, 100% { opacity: 0.2; transform: scale(1); }
-                    50% { opacity: 0.6; transform: scale(1.2); }
-                }
-                
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translateY(30px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                
-                @keyframes pulse-glow {
-                    0%, 100% { filter: brightness(1); }
-                    50% { filter: brightness(1.1); }
-                }
-            `}</style>
-        </div>
-        {/* Modal de recuperación de contraseña */}
-        {isOpenModal && (
-            <div 
-                className="fixed inset-0 z-50 flex items-center justify-center"
-                onClick={() => {
-                    setIsOpenModal(false);
-                    setIsRecoveringPassword(false);
-                }}
-            >
-                {/* Overlay oscuro */}
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-                
-                {/* Card del modal */}
-                <Card 
-                    className="relative z-10 w-full max-w-sm mx-4 bg-card backdrop-blur-xl border border-border shadow-2xl"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ animation: "slideUp 0.3s ease-out" }}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="font-semibold text-foreground">
+                <Lock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Contraseña
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Introduce tu contraseña"
+                  required
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    if (formError) setFormError(null)
+                  }}
+                  aria-invalid={formError ? true : undefined}
+                  className="h-11 bg-muted/40 pr-11"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-pressed={showPassword}
+                  disabled={isLoading}
                 >
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-xl text-foreground">Recuperar contraseña</CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                            Ingresa tu correo para recuperar tu contraseña
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="p-4 rounded-lg bg-warning/10 border border-warning/30">
-                            <p className="text-warning text-sm text-center">
-                                🚧 Estamos trabajando en esta funcionalidad
-                            </p>
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button 
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => {
-                                setIsOpenModal(false);
-                                setIsRecoveringPassword(false);
-                            }}
-                        >
-                            Cerrar
-                        </Button>
-                    </CardFooter>
-                </Card>
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </Button>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-sm"
+                  onClick={() => setIsOpenModal(true)}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
             </div>
-        )}
-        </>
-    )
+
+            {formError && (
+              <p
+                role="alert"
+                className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                {formError}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              className="h-11 min-h-[44px] w-full font-semibold"
+              disabled={!isFormValid || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  Iniciando sesión…
+                </>
+              ) : (
+                "Iniciar sesión"
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+
+      {/* Recuperación de contraseña */}
+      <Dialog
+        open={isOpenModal}
+        onOpenChange={(open) => {
+          if (!open) setIsOpenModal(false)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar contraseña</DialogTitle>
+            <DialogDescription>
+              Ingresa tu correo para recuperar tu contraseña
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+            <p className="text-center text-sm text-warning">
+              Estamos trabajando en esta funcionalidad
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="w-full" onClick={() => setIsOpenModal(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
 }
 
-export default LoginPage;
-
+export default LoginPage

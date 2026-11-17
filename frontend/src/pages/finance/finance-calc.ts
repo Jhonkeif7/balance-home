@@ -23,8 +23,18 @@ export interface FinanceTotals {
   ratesReady: boolean
 }
 
-/** Preferencia de moneda base cuando hay varias. */
-export function pickBaseCurrency(accounts: Account[]): string {
+/**
+ * Moneda base para totales / KPIs.
+ * Si el perfil tiene moneda predeterminada (p. ej. DOP), esa tiene prioridad.
+ * Si no, se elige por las cuentas (DOP > USD > la más frecuente).
+ */
+export function pickBaseCurrency(
+  accounts: Account[],
+  preferredCurrency?: string | null
+): string {
+  const preferred = (preferredCurrency || "").trim().toUpperCase()
+  if (preferred) return preferred
+
   if (accounts.length === 0) return "USD"
   const counts = new Map<string, number>()
   for (const a of accounts) {
@@ -126,9 +136,10 @@ export function computeFinanceTotals(
   accountsView: Account[],
   transactions: Transaction[],
   rates: ExchangeRatesMap | null,
-  periodYYYYMM: string = currentMonth()
+  periodYYYYMM: string = currentMonth(),
+  preferredCurrency?: string | null
 ): FinanceTotals {
-  const baseCurrency = pickBaseCurrency(accountsView)
+  const baseCurrency = pickBaseCurrency(accountsView, preferredCurrency)
   const currencies = new Set(accountsView.map((a) => (a.currency || "USD").toUpperCase()))
   const hasMultipleCurrencies = currencies.size > 1
   const ratesReady = !hasMultipleCurrencies || !!rates

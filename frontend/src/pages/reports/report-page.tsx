@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 import * as reportsService from "@/services/reports.service";
 import * as financeService from "@/services/finance.service";
+import * as profilesService from "@/services/profiles.service";
 import { getUsdExchangeRates } from "@/services/exchange-rate.service";
 import {
     buildExpensesByCategory,
@@ -228,6 +230,7 @@ function SummaryTable({ data }: { data: TransactionSummary[] }) {
 }
 
 const ReportPage = () => {
+    const { user } = useAuth();
     const [period, setPeriod] = useState("6months");
     const [monthly, setMonthly] = useState<reportsService.MonthlyFinanceSummary[]>([]);
     const [expenses, setExpenses] = useState<reportsService.ExpenseByCategory[]>([]);
@@ -239,17 +242,21 @@ const ReportPage = () => {
         let active = true;
         (async () => {
             try {
-                const [accounts, transactions, categories, d, rateData] = await Promise.all([
+                const [accounts, transactions, categories, d, rateData, profile] = await Promise.all([
                     financeService.getAccounts(),
                     financeService.getTransactions(),
                     financeService.getCategories(),
                     reportsService.getDailyProductivity(),
                     getUsdExchangeRates().catch(() => null),
+                    user?.id
+                        ? profilesService.getProfileById(user.id).catch(() => null)
+                        : Promise.resolve(null),
                 ]);
                 if (!active) return;
 
                 const rates: ExchangeRatesMap | null = rateData?.rates ?? null;
-                const base = pickBaseCurrency(accounts);
+                const preferred = profile?.default_currency?.toUpperCase() ?? null;
+                const base = pickBaseCurrency(accounts, preferred);
                 reportBaseCurrency = base;
                 setBaseCurrency(base);
 
@@ -280,7 +287,7 @@ const ReportPage = () => {
         return () => {
             active = false;
         };
-    }, []);
+    }, [user?.id]);
 
     useEffect(() => {
         reportBaseCurrency = baseCurrency;

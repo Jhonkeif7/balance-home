@@ -35,6 +35,7 @@ interface CurrencyTabProps {
   deleteCategory: (id: string) => Promise<void>
   getBudgetPercentage: (budget: Budget) => number
   getBudgetStatus: (budget: Budget) => "exceeded" | "warning" | "safe"
+  preferredCurrency?: string | null
 }
 
 const tabItems = [
@@ -68,6 +69,7 @@ function CurrencyTab({
   deleteCategory,
   getBudgetPercentage,
   getBudgetStatus,
+  preferredCurrency,
 }: CurrencyTabProps) {
   const multiNote =
     totals.hasMultipleCurrencies && totals.ratesReady
@@ -160,6 +162,7 @@ function CurrencyTab({
           accounts={accounts}
           upsertAccount={upsertAccount}
           deleteAccount={deleteAccount}
+          defaultCurrency={preferredCurrency ?? totals.baseCurrency}
         />
       </TabsContent>
 

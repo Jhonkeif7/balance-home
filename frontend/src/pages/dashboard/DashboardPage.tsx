@@ -5,9 +5,11 @@ import { StatCard } from "@/components/ui/StatCard";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { TrendingUp, TrendingDown, Activity, DollarSign, Target, ArrowLeftRight } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import * as financeService from "@/services/finance.service";
 import * as tasksService from "@/services/tasks.service";
 import * as reportsService from "@/services/reports.service";
+import * as profilesService from "@/services/profiles.service";
 import { getUsdExchangeRates } from "@/services/exchange-rate.service";
 import {
     computeFinanceTotals,
@@ -25,25 +27,30 @@ const toLocalDay = (d: Date) => {
 const todayStr = todayInput();
 
 function DashboardPage() {
+    const { user } = useAuth();
     const [accounts, setAccounts] = useState<financeService.Account[]>([]);
     const [transactions, setTransactions] = useState<financeService.Transaction[]>([]);
     const [categories, setCategories] = useState<financeService.Category[]>([]);
     const [tasks, setTasks] = useState<tasksService.Task[]>([]);
     const [daily, setDaily] = useState<reportsService.DailyProductivity[]>([]);
     const [rates, setRates] = useState<ExchangeRatesMap | null>(null);
+    const [preferredCurrency, setPreferredCurrency] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         let active = true;
         (async () => {
             try {
-                const [acc, txs, cats, ts, prod, rateData] = await Promise.all([
+                const [acc, txs, cats, ts, prod, rateData, profile] = await Promise.all([
                     financeService.getAccounts(),
                     financeService.getTransactions(),
                     financeService.getCategories(),
                     tasksService.getTasks(),
                     reportsService.getDailyProductivity(),
                     getUsdExchangeRates().catch(() => null),
+                    user?.id
+                        ? profilesService.getProfileById(user.id).catch(() => null)
+                        : Promise.resolve(null),
                 ]);
                 if (!active) return;
                 setAccounts(acc);
@@ -52,6 +59,9 @@ function DashboardPage() {
                 setTasks(ts);
                 setDaily(prod);
                 if (rateData) setRates(rateData.rates);
+                if (profile?.default_currency) {
+                    setPreferredCurrency(profile.default_currency.toUpperCase());
+                }
             } catch (err) {
                 console.error(err);
                 toast.error("No se pudieron cargar los datos del dashboard");
@@ -62,7 +72,7 @@ function DashboardPage() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [user?.id]);
 
     const categoryName = useMemo(() => {
         const map = new Map(categories.map((c) => [c.id, c.name]));
@@ -80,8 +90,8 @@ function DashboardPage() {
     );
 
     const totals = useMemo(
-        () => computeFinanceTotals(accountsView, transactions, rates),
-        [accountsView, transactions, rates]
+        () => computeFinanceTotals(accountsView, transactions, rates, undefined, preferredCurrency),
+        [accountsView, transactions, rates, preferredCurrency]
     );
 
     const totalBalance = totals.totalBalance;
@@ -184,16 +194,16 @@ function DashboardPage() {
             {/* Charts Section - Stack en móvil, side-by-side en desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
                 {/* Main Chart - Full width en móvil, 2/3 en desktop */}
-                <Card className="lg:col-span-2 bg-card/60 backdrop-blur border-border/60">
-                    <CardHeader className="p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <Card className="lg:col-span-2 gap-1 bg-card/60 backdrop-blur border-border/60 py-1.5">
+                    <CardHeader className="px-3 py-2 sm:px-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <div>
                                 <CardTitle className="text-base sm:text-lg">Actividad Semanal</CardTitle>
                                 <CardDescription className="text-xs sm:text-sm">Productividad de los últimos 7 días</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                    <CardContent className="px-3 pb-2 pt-0 sm:px-4 sm:pb-3">
                         {/* Chart - Altura responsive */}
                         <div className="h-48 sm:h-56 md:h-64 flex items-end justify-between gap-1 sm:gap-2 px-2 sm:px-4">
                             {weeklyDays.map((day) => (
@@ -216,8 +226,8 @@ function DashboardPage() {
                 </Card>
 
                 {/* Side Card - Tareas de Hoy */}
-                <Card className="bg-card/60 backdrop-blur border-border/60">
-                    <CardHeader className="p-4 sm:p-6">
+                <Card className="gap-1 bg-card/60 backdrop-blur border-border/60 py-1.5">
+                    <CardHeader className="px-3 py-2 sm:px-4">
                         <CardTitle className="text-base sm:text-lg">Tareas de Hoy</CardTitle>
                         <CardDescription className="text-xs sm:text-sm">
                             {todayTasks.length === 0
@@ -225,13 +235,13 @@ function DashboardPage() {
                                 : `${todayDone} de ${todayTasks.length} completadas`}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                    <CardContent className="px-3 pb-2 pt-0 sm:px-4 sm:pb-3">
                         {todayTasks.length === 0 ? (
-                            <div className="py-8 text-center text-xs sm:text-sm text-muted-foreground">
+                            <div className="py-4 text-center text-xs sm:text-sm text-muted-foreground">
                                 No tienes tareas con vencimiento hoy.
                             </div>
                         ) : (
-                            <div className="space-y-2 sm:space-y-3">
+                            <div className="space-y-1.5 sm:space-y-2">
                                 {todayTasks.slice(0, 6).map((item) => (
                                     <div
                                         key={item.id}
@@ -272,28 +282,28 @@ function DashboardPage() {
             </div>
 
             {/* Recent Activity */}
-            <Card className="bg-card/60 backdrop-blur border-border/60">
-                <CardHeader className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <Card className="gap-1 bg-card/60 backdrop-blur border-border/60 py-1.5">
+                <CardHeader className="px-3 py-2 sm:px-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
                         <div>
                             <CardTitle className="text-base sm:text-lg">Actividad Reciente</CardTitle>
                             <CardDescription className="text-xs sm:text-sm">Tus movimientos de hoy</CardDescription>
                         </div>
                         <Link
                             to="/currency"
-                            className="text-xs sm:text-sm text-primary hover:underline self-start sm:self-auto min-h-[44px] flex items-center"
+                            className="text-xs sm:text-sm text-primary hover:underline self-start sm:self-auto min-h-[36px] flex items-center"
                         >
                             Ver todo
                         </Link>
                     </div>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                <CardContent className="px-3 pb-2 pt-0 sm:px-4 sm:pb-3">
                     {recentActivity.length === 0 ? (
-                        <div className="py-8 text-center text-xs sm:text-sm text-muted-foreground">
+                        <div className="py-4 text-center text-xs sm:text-sm text-muted-foreground">
                             No hay movimientos para mostrar.
                         </div>
                     ) : (
-                        <div className="space-y-2 sm:space-y-4">
+                        <div className="space-y-1.5 sm:space-y-2">
                             {recentActivity.map((item) => {
                                 const isIncome = item.type === "income";
                                 const isTransfer = item.type === "transfer";
@@ -311,10 +321,10 @@ function DashboardPage() {
                                         key={item.id}
                                         className="
                                             flex items-center justify-between 
-                                            p-3 sm:p-4 rounded-lg 
+                                            p-2 sm:p-2.5 rounded-lg 
                                             bg-muted/30 hover:bg-muted/50 
                                             transition-colors
-                                            min-h-[60px] sm:min-h-[72px]
+                                            min-h-[48px] sm:min-h-[56px]
                                         "
                                     >
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">

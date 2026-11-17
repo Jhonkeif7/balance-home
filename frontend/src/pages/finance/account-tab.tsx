@@ -22,6 +22,8 @@ interface AccountTabProps {
   accounts: Account[]
   upsertAccount: (account: Account) => Promise<void>
   deleteAccount: (id: string) => Promise<void>
+  /** Moneda predeterminada del perfil (p. ej. DOP). */
+  defaultCurrency?: string
 }
 
 type AccountType = "bank" | "cash" | "credit" | "digital"
@@ -40,14 +42,24 @@ interface AccountForm {
   currency: string
 }
 
-const emptyForm: AccountForm = { name: "", type: "bank", balance: "", currency: "USD" }
+function AccountTab({
+  accounts,
+  upsertAccount,
+  deleteAccount,
+  defaultCurrency = "USD",
+}: AccountTabProps) {
+  const blankForm = (): AccountForm => ({
+    name: "",
+    type: "bank",
+    balance: "",
+    currency: (defaultCurrency || "USD").toUpperCase(),
+  })
 
-function AccountTab({ accounts, upsertAccount, deleteAccount }: AccountTabProps) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Account | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [form, setForm] = useState<AccountForm>(emptyForm)
+  const [form, setForm] = useState<AccountForm>(blankForm)
 
   // Movimientos ya aplicados a la cuenta = balance derivado - saldo base.
   const movements = editing ? editing.balance - (editing.initialBalance ?? editing.balance) : 0
@@ -56,7 +68,7 @@ function AccountTab({ accounts, upsertAccount, deleteAccount }: AccountTabProps)
 
   const openCreate = () => {
     setEditing(null)
-    setForm(emptyForm)
+    setForm(blankForm())
     setOpen(true)
   }
 
