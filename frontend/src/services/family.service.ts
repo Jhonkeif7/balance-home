@@ -87,9 +87,19 @@ async function profilesByIds(
 
 /** Familia actual del usuario (si pertenece a alguna). */
 export async function getMyFamily(): Promise<Family | null> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError) throw authError
+  if (!user) return null
+
+  // Filtrar por user_id: la RLS de family_members también deja ver al resto
+  // de la familia, y maybeSingle() fallaría con 2+ miembros.
   const { data: membership, error: e1 } = await supabase
     .from("family_members")
     .select("family_id")
+    .eq("user_id", user.id)
     .maybeSingle()
   if (e1) throw e1
   if (!membership) return null
