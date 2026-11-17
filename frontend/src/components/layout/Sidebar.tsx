@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo_dailybalance.png";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useAuth } from "@/lib/auth";
 import { isSettingsAdmin } from "@/lib/settings-admin";
@@ -11,6 +11,7 @@ import {
     LayoutDashboard,
     Calendar,
     Wallet,
+    ShoppingCart,
     User,
     Settings,
     LogOut,
@@ -143,17 +144,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
                 {/* Logo Section */}
                 <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-                    <img
-                        src={logo}
-                        alt="DailyBalance"
-                        className="w-10 h-10 rounded-full object-cover shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-lg font-bold text-sidebar-foreground truncate">
-                            DailyBalance
-                        </h1>
-                        <p className="text-xs text-sidebar-foreground/50">Tu balance diario</p>
-                    </div>
+                    <BrandLogo className="h-9 w-auto max-w-[10.5rem] flex-1 min-w-0" />
                     {/* Close button — only on small screens */}
                     <button
                         className="lg:hidden p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors shrink-0"
@@ -181,6 +172,11 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
                             to="/currency"
                             icon={<Wallet className="w-5 h-5" />}
                             label="Finanzas"
+                        />
+                        <NavItem
+                            to="/shopping"
+                            icon={<ShoppingCart className="w-5 h-5" />}
+                            label="Compras del hogar"
                         />
                     </NavSection>
 

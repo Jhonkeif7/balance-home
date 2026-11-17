@@ -288,7 +288,7 @@ export function buildExpensesByCategory(
       return {
         categoryId: id,
         categoryName: meta?.name ?? "Sin categoría",
-        color: meta?.color ?? "#2563EB",
+        color: meta?.color ?? "#00847D",
         total,
       }
     })

@@ -77,7 +77,7 @@ function StatCard({
             </p>
             <p
               className={cn(
-                "truncate font-bold text-foreground",
+                "truncate font-semibold text-foreground",
                 compactOnMobile && "text-base xl:mt-1 xl:text-2xl",
                 compact && !compactOnMobile && "text-lg",
                 !dense && "mt-1 text-xl sm:text-2xl"

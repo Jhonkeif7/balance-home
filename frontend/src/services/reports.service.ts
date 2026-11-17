@@ -72,7 +72,7 @@ export async function getExpensesByCategory(): Promise<ExpenseByCategory[]> {
   return (data ?? []).map((r: any) => ({
     categoryId: r.category_id,
     categoryName: r.category_name ?? "Sin categoría",
-    color: r.color ?? "#2563EB",
+    color: r.color ?? "#00847D",
     total: Number(r.total ?? 0),
   }))
 }

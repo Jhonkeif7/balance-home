@@ -487,7 +487,7 @@ function MovimentTab({
                     <div className="flex shrink-0 items-center gap-2">
                       <div className="text-right">
                         <p
-                          className={`text-base font-bold ${amountClass(transaction.type)}`}
+                          className={`text-base font-semibold ${amountClass(transaction.type)}`}
                           style={{ fontVariantNumeric: "tabular-nums" }}
                         >
                           {amountPrefix(transaction.type)}

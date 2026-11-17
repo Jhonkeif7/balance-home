@@ -3,7 +3,7 @@ import { Input } from "../../components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "../../components/ui/Card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/Button";
-import logo from "@/assets/logo_dailybalance.png";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Mail, Lock, Sparkles } from "lucide-react";
@@ -66,7 +66,7 @@ const LoginPage = () => {
                 <div className="relative flex justify-center items-center min-h-screen overflow-hidden">
             {/* Fondo con gradiente animado */}
             <div 
-                className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-900 to-indigo-950"
+                className="absolute inset-0 bg-gradient-to-br from-background via-accent/40 to-background"
                 style={{
                     backgroundSize: "400% 400%",
                     animation: "gradientShift 15s ease infinite",
@@ -76,7 +76,7 @@ const LoginPage = () => {
             {/* Elementos decorativos flotantes */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div 
-                    className="absolute w-72 h-72 bg-blue-500/20 rounded-full blur-3xl"
+                    className="absolute w-72 h-72 bg-primary/20 rounded-full blur-3xl"
                     style={{
                         top: "10%",
                         left: "10%",
@@ -84,7 +84,7 @@ const LoginPage = () => {
                     }}
                 />
                 <div 
-                    className="absolute w-96 h-96 bg-indigo-400/15 rounded-full blur-3xl"
+                    className="absolute w-96 h-96 bg-primary/10 rounded-full blur-3xl"
                     style={{
                         bottom: "10%",
                         right: "5%",
@@ -92,7 +92,7 @@ const LoginPage = () => {
                     }}
                 />
                 <div 
-                    className="absolute w-64 h-64 bg-sky-400/10 rounded-full blur-3xl"
+                    className="absolute w-64 h-64 bg-primary/10 rounded-full blur-3xl"
                     style={{
                         top: "50%",
                         left: "60%",
@@ -106,7 +106,7 @@ const LoginPage = () => {
                 {[...Array(6)].map((_, i) => (
                     <Sparkles
                         key={i}
-                        className="absolute text-white/20"
+                        className="absolute text-primary/20"
                         style={{
                             width: `${20 + Math.random() * 20}px`,
                             height: `${20 + Math.random() * 20}px`,
@@ -121,7 +121,7 @@ const LoginPage = () => {
 
             {/* Card principal con glassmorphism */}
             <Card 
-                className="relative z-10 w-full max-w-sm mx-4 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl"
+                className="relative z-10 w-full max-w-sm mx-4 bg-card/80 backdrop-blur-xl border border-border shadow-2xl"
                 style={{
                     animation: "slideUp 0.6s ease-out",
                 }}
@@ -131,18 +131,17 @@ const LoginPage = () => {
                         className="relative group cursor-pointer"
                         style={{ animation: "pulse-glow 3s ease-in-out infinite" }}
                     >
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-500" />
-                        <img 
-                            src={logo} 
-                            alt="Logo DailyBalance" 
-                            className="relative w-20 h-20 rounded-full shadow-xl ring-4 ring-white/20 group-hover:scale-105 transition-transform duration-300" 
+                        <div className="absolute -inset-1 bg-primary rounded-2xl blur opacity-40 group-hover:opacity-75 transition duration-500" />
+                        <BrandLogo
+                            variant="icon"
+                            className="relative w-20 h-20 rounded-2xl shadow-xl ring-4 ring-primary/20 group-hover:scale-105 transition-transform duration-300"
                         />
                     </div>
-                    <CardTitle className="mt-3 text-2xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                    <CardTitle className="mt-3 text-2xl font-semibold text-foreground">
                         Inicia sesión
                     </CardTitle>
-                    <CardDescription className="text-base text-white/80">
-                        Bienvenido a DailyBalance
+                    <CardDescription className="text-base text-muted-foreground">
+                        Bienvenido a Balance Home
                     </CardDescription>
                 </CardHeader>
 
@@ -151,7 +150,7 @@ const LoginPage = () => {
                         <div className="flex flex-col gap-4">
                             {/* Campo Email */}
                             <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-white/90 font-medium flex items-center gap-2">
+                                <Label htmlFor="email" className="text-foreground font-medium flex items-center gap-2">
                                     <Mail className="h-4 w-4" />
                                     Correo electrónico
                                 </Label>
@@ -164,11 +163,11 @@ const LoginPage = () => {
                                         autoComplete="email"
                                         disabled={isLoading}
                                         className={`
-                                            h-10 text-white bg-white/10 border-white/20 
-                                            placeholder:text-white/40 
-                                            focus:bg-white/15 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/30
+                                            h-10 
+                                            placeholder:text-muted-foreground 
+                                            focus:border-ring focus:ring-2 focus:ring-ring/30
                                             transition-all duration-300
-                                            ${focusedField === 'email' ? 'shadow-lg shadow-blue-500/20' : ''}
+                                            ${focusedField === 'email' ? 'shadow-lg shadow-primary/20' : ''}
                                         `}
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -181,13 +180,13 @@ const LoginPage = () => {
                             {/* Campo Contraseña */}
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password" className="text-white/90 font-medium flex items-center gap-2">
+                                    <Label htmlFor="password" className="text-foreground font-medium flex items-center gap-2">
                                         <Lock className="h-4 w-4" />
                                         Contraseña
                                     </Label>
                                     <a
                                         href="#"
-                                        className="ml-auto text-sm text-blue-300/80 hover:text-blue-300 underline-offset-4 hover:underline transition-colors"
+                                        className="ml-auto text-sm text-primary/90 hover:text-primary underline-offset-4 hover:underline transition-colors"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             handleRecoverPassword();
@@ -204,11 +203,11 @@ const LoginPage = () => {
                                         autoComplete="current-password"
                                         disabled={isLoading}
                                         className={`
-                                            h-10 text-white bg-white/10 border-white/20 pr-12
-                                            placeholder:text-white/40
-                                            focus:bg-white/15 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/30
+                                            h-10 pr-12
+                                            placeholder:text-muted-foreground
+                                            focus:border-ring focus:ring-2 focus:ring-ring/30
                                             transition-all duration-300
-                                            ${focusedField === 'password' ? 'shadow-lg shadow-blue-500/20' : ''}
+                                            ${focusedField === 'password' ? 'shadow-lg shadow-primary/20' : ''}
                                         `}
                                         value={password} 
                                         onChange={(e) => setPassword(e.target.value)}
@@ -219,7 +218,7 @@ const LoginPage = () => {
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-white/10 text-white/60 hover:text-white rounded-lg transition-all"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-accent text-muted-foreground hover:text-foreground rounded-lg transition-all"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                                         disabled={isLoading}
@@ -236,15 +235,7 @@ const LoginPage = () => {
                             {/* Botón de envío */}
                             <Button 
                                 type="submit" 
-                                className={`
-                                    relative h-10 w-full mt-1 font-semibold text-white overflow-hidden
-                                    bg-gradient-to-r from-blue-600 to-indigo-600 
-                                    hover:from-blue-500 hover:to-indigo-500
-                                    disabled:opacity-50 disabled:cursor-not-allowed 
-                                    transition-all duration-300 
-                                    shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02]
-                                    active:scale-[0.98]
-                                `}
+                                className="relative h-10 w-full mt-1 shadow-lg hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]"
                                 disabled={!isFormValid || isLoading}
                             >
                                 {isLoading ? (
@@ -262,9 +253,9 @@ const LoginPage = () => {
 
                 <CardFooter className="flex-col gap-3 pt-0 pb-4">
                     <div className="flex items-center gap-3 w-full">
-                        <div className="flex-1 h-px bg-white/20" />
-                        <span className="text-white/50 text-xs">o</span>
-                        <div className="flex-1 h-px bg-white/20" />
+                        <div className="flex-1 h-px bg-border" />
+                        <span className="text-muted-foreground text-xs">o</span>
+                        <div className="flex-1 h-px bg-border" />
                     </div>
                     
                     {/* <Button 
@@ -275,14 +266,14 @@ const LoginPage = () => {
                     </Button> */}
 
                     {/* Credenciales de prueba */}
-                    <div className="w-full p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="w-full p-3 rounded-lg bg-muted/50 border border-border">
                         <div className="flex items-center gap-2 mb-1">
-                            <Sparkles className="h-3 w-3 text-blue-400" />
-                            <span className="text-xs font-medium text-white/90">Credenciales de prueba</span>
+                            <Sparkles className="h-3 w-3 text-primary" />
+                            <span className="text-xs font-medium text-foreground">Credenciales de prueba</span>
                         </div>
-                        <div className="space-y-0.5 text-xs text-white/70">
-                            <p><span className="text-white/50">Correo:</span> {oficial_email}</p>
-                            <p><span className="text-white/50">Contraseña:</span> la definida en Supabase</p>
+                        <div className="space-y-0.5 text-xs text-muted-foreground">
+                            <p><span className="text-muted-foreground/80">Correo:</span> {oficial_email}</p>
+                            <p><span className="text-muted-foreground/80">Contraseña:</span> la definida en Supabase</p>
                         </div>
                     </div>
                 </CardFooter>
@@ -330,19 +321,19 @@ const LoginPage = () => {
                 
                 {/* Card del modal */}
                 <Card 
-                    className="relative z-10 w-full max-w-sm mx-4 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl"
+                    className="relative z-10 w-full max-w-sm mx-4 bg-card backdrop-blur-xl border border-border shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                     style={{ animation: "slideUp 0.3s ease-out" }}
                 >
                     <CardHeader className="text-center">
-                        <CardTitle className="text-xl text-white">Recuperar contraseña</CardTitle>
-                        <CardDescription className="text-white/70">
+                        <CardTitle className="text-xl text-foreground">Recuperar contraseña</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                             Ingresa tu correo para recuperar tu contraseña
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="p-4 rounded-lg bg-amber-500/20 border border-amber-500/30">
-                            <p className="text-amber-200 text-sm text-center">
+                        <div className="p-4 rounded-lg bg-warning/10 border border-warning/30">
+                            <p className="text-warning text-sm text-center">
                                 🚧 Estamos trabajando en esta funcionalidad
                             </p>
                         </div>
@@ -350,7 +341,7 @@ const LoginPage = () => {
                     <CardFooter>
                         <Button 
                             variant="outline"
-                            className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10"
+                            className="w-full"
                             onClick={() => {
                                 setIsOpenModal(false);
                                 setIsRecoveringPassword(false);

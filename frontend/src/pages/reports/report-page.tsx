@@ -146,7 +146,7 @@ function PieChartComponent({ data }: { data: CategoryData[] }) {
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                        <p className="text-2xl font-bold">{currencyFmt(total)}</p>
+                        <p className="text-2xl font-semibold">{currencyFmt(total)}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
                     </div>
                 </div>
@@ -209,14 +209,14 @@ function SummaryTable({ data }: { data: TransactionSummary[] }) {
                 </tbody>
                 <tfoot>
                     <tr className="bg-muted/30">
-                        <td className="py-3 px-4 text-sm font-bold">Total</td>
-                        <td className="py-3 px-4 text-sm text-right font-bold text-success">
+                        <td className="py-3 px-4 text-sm font-semibold">Total</td>
+                        <td className="py-3 px-4 text-sm text-right font-semibold text-success">
                             +${data.reduce((sum, r) => sum + r.income, 0).toLocaleString()}
                         </td>
-                        <td className="py-3 px-4 text-sm text-right font-bold text-destructive">
+                        <td className="py-3 px-4 text-sm text-right font-semibold text-destructive">
                             -${data.reduce((sum, r) => sum + r.expense, 0).toLocaleString()}
                         </td>
-                        <td className="py-3 px-4 text-sm text-right font-bold">
+                        <td className="py-3 px-4 text-sm text-right font-semibold">
                             ${data.reduce((sum, r) => sum + r.balance, 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4"></td>
@@ -590,7 +590,7 @@ const ReportPage = () => {
                                                     (day.completed / day.total) >= 0.8 
                                                         ? "border-success text-success" 
                                                         : (day.completed / day.total) >= 0.6
-                                                            ? "border-amber-500 text-amber-500"
+                                                            ? "border-warning text-warning"
                                                             : "border-destructive text-destructive"
                                                 }`}
                                             >
@@ -655,7 +655,7 @@ const ReportPage = () => {
                         <Card className="bg-card/60 backdrop-blur border-border/60">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Target className="w-5 h-5 text-amber-500" />
+                                    <Target className="w-5 h-5 text-warning" />
                                     Áreas de Mejora
                                 </CardTitle>
                             </CardHeader>

@@ -3,115 +3,131 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: Geist;
+  src: url("../../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
-  Sistema de color DailyBalance
-  - Modo diurno: azul financiero (#2563EB), fondo gris claro (#F6F8FB), verde éxito (#16A34A)
-  - Modo noche: fondo azul oscuro (#0F172A), azul claro de acción (#60A5FA), verde suave (#4ADE80)
+  Sistema de color Balance Home
+  - Modo claro: marca #00847D, fondo #F5F7FA, texto #081A33
+  - Modo oscuro: marca #49D7BC, fondo #101B2D, texto #F5F7FA
 */
 
-/* Light theme (modo diurno) */
+/* Light theme */
 :root {
   --radius: 0.75rem;
 
-  --background: #f6f8fb;
-  --foreground: #0f172a;
+  --background: #f5f7fa;
+  --foreground: #081a33;
 
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #081a33;
 
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #081a33;
 
-  --primary: #2563eb;
+  --primary: #00847d;
   --primary-foreground: #ffffff;
 
-  --secondary: #eef2f8;
-  --secondary-foreground: #1e293b;
+  --secondary: #e8edf3;
+  --secondary-foreground: #081a33;
 
-  --muted: #eef2f8;
-  --muted-foreground: #64748b;
+  --muted: #e8edf3;
+  --muted-foreground: #4a5d78;
 
-  --accent: #e0eafb;
-  --accent-foreground: #1e3a8a;
+  --accent: #dff3f1;
+  --accent-foreground: #065a55;
 
   --success: #16a34a;
   --success-foreground: #ffffff;
 
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
 
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
+  --border: #dce3ec;
+  --input: #dce3ec;
+  --ring: #00847d;
 
-  --chart-1: #2563eb;
+  --chart-1: #00847d;
   --chart-2: #16a34a;
   --chart-3: #d97706;
   --chart-4: #7c3aed;
   --chart-5: #dc2626;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #2563eb;
+  --sidebar-foreground: #081a33;
+  --sidebar-primary: #00847d;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eef2f8;
-  --sidebar-accent-foreground: #1e293b;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #2563eb;
+  --sidebar-accent: #e8edf3;
+  --sidebar-accent-foreground: #081a33;
+  --sidebar-border: #dce3ec;
+  --sidebar-ring: #00847d;
 }
 
-/* Dark theme (modo noche) */
+/* Dark theme */
 .dark {
   color-scheme: dark;
 
-  --background: #0f172a;
-  --foreground: #e2e8f0;
+  --background: #101b2d;
+  --foreground: #f5f7fa;
 
-  --card: #1e293b;
-  --card-foreground: #e2e8f0;
+  --card: #162338;
+  --card-foreground: #f5f7fa;
 
-  --popover: #1e293b;
-  --popover-foreground: #e2e8f0;
+  --popover: #162338;
+  --popover-foreground: #f5f7fa;
 
-  --primary: #60a5fa;
-  --primary-foreground: #0f172a;
+  --primary: #49d7bc;
+  --primary-foreground: #081a33;
 
-  --secondary: #1e293b;
-  --secondary-foreground: #e2e8f0;
+  --secondary: #1c2a42;
+  --secondary-foreground: #f5f7fa;
 
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
+  --muted: #1c2a42;
+  --muted-foreground: #9caec5;
 
-  --accent: #1d2a44;
-  --accent-foreground: #bfdbfe;
+  --accent: #1e3d4a;
+  --accent-foreground: #a8f5e8;
 
   --success: #4ade80;
-  --success-foreground: #0f172a;
+  --success-foreground: #081a33;
+
+  --warning: #fbbf24;
+  --warning-foreground: #081a33;
 
   --destructive: #f87171;
-  --destructive-foreground: #0f172a;
+  --destructive-foreground: #081a33;
 
   --border: #243049;
   --input: #2c3a55;
-  --ring: #60a5fa;
+  --ring: #49d7bc;
 
-  --chart-1: #60a5fa;
+  --chart-1: #49d7bc;
   --chart-2: #4ade80;
   --chart-3: #fbbf24;
   --chart-4: #a78bfa;
   --chart-5: #f87171;
 
-  --sidebar: #0f1a2e;
-  --sidebar-foreground: #e2e8f0;
-  --sidebar-primary: #60a5fa;
-  --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar: #0d1628;
+  --sidebar-foreground: #f5f7fa;
+  --sidebar-primary: #49d7bc;
+  --sidebar-primary-foreground: #081a33;
+  --sidebar-accent: #1c2a42;
+  --sidebar-accent-foreground: #f5f7fa;
   --sidebar-border: #243049;
-  --sidebar-ring: #60a5fa;
+  --sidebar-ring: #49d7bc;
 }
 
 @theme inline {
+  --font-sans: Geist, ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -132,6 +148,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -175,6 +193,9 @@
     @apply h-full w-full m-0;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans font-normal;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
   }
 }

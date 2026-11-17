@@ -10,7 +10,7 @@ function NotFoundPage() {
             <div className="text-center max-w-md">
                 {/* 404 Number */}
                 <div className="relative mb-8">
-                    <h1 className="text-[150px] font-black text-primary/20 leading-none select-none">
+                    <h1 className="text-[150px] font-semibold text-primary/20 leading-none select-none">
                         404
                     </h1>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -19,7 +19,7 @@ function NotFoundPage() {
                 </div>
 
                 {/* Message */}
-                <h2 className="text-3xl font-bold text-foreground mb-4">
+                <h2 className="text-3xl font-semibold text-foreground mb-4">
                     Ruta no encontrada
                 </h2>
                 <p className="text-muted-foreground mb-8 text-lg">

@@ -188,7 +188,7 @@ export async function getCategories(): Promise<Category[]> {
     id: c.id,
     name: c.name,
     icon: c.icon ?? "Tag",
-    color: c.color ?? "#2563EB",
+    color: c.color ?? "#00847D",
     type: (c.type ?? "expense") as CategoryType,
     subcategories: subsByCat.get(c.id) ?? [],
   }))
@@ -213,7 +213,7 @@ export async function upsertCategory(
     id: c.id,
     name: c.name,
     icon: c.icon ?? "Tag",
-    color: c.color ?? "#2563EB",
+    color: c.color ?? "#00847D",
     type: (c.type ?? "expense") as CategoryType,
     subcategories: [],
   }

@@ -727,7 +727,7 @@ const NotesPage = () => {
                     updateNote(selectedNote.id, { title: e.target.value })
                   }
                   placeholder="Título"
-                  className="w-full text-2xl font-bold text-foreground bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/50 mb-4"
+                  className="w-full text-2xl font-semibold text-foreground bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/50 mb-4"
                   rows={1}
                   style={{ fieldSizing: 'content' } as React.CSSProperties}
                 />

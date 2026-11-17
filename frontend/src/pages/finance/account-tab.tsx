@@ -162,7 +162,7 @@ function AccountTab({ accounts, upsertAccount, deleteAccount }: AccountTabProps)
                   <div className="mt-3">
                     <p className="text-xs text-muted-foreground">Balance disponible</p>
                     <p
-                      className={`text-2xl font-bold ${account.balance >= 0 ? "text-success" : "text-destructive"}`}
+                      className={`text-2xl font-semibold ${account.balance >= 0 ? "text-success" : "text-destructive"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {formatCurrency(account.balance, account.currency)}

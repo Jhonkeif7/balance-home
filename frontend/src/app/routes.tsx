@@ -10,6 +10,7 @@ import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import DailyPage from "@/pages/to-do/DailyPage";
 import CurrencyPage from "@/pages/finance/CurrencyPage";
+import ShoppingPage from "@/pages/shopping/ShoppingPage";
 import ReportPage from "@/pages/reports/report-page";
 import UserProfilePage from "@/pages/user/UserProfilePage";
 import SettingsPage from "@/pages/user/SettingsPage";
@@ -67,6 +68,18 @@ export function AppRoutes() {
                     <ProtectedRoute>
                         <AppLayout title="Finanzas" subtitle="Control de gastos e ingresos">
                             <CurrencyPage />
+                        </AppLayout>
+                    </ProtectedRoute>
+                } 
+            />
+
+            {/* Shopping */}
+            <Route 
+                path="/shopping" 
+                element={
+                    <ProtectedRoute>
+                        <AppLayout title="Compras del hogar" subtitle="Inventario y lista de compras">
+                            <ShoppingPage />
                         </AppLayout>
                     </ProtectedRoute>
                 } 

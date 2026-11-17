@@ -161,7 +161,7 @@ function BudgetTab({
                           </Badge>
                         )}
                         {status === "warning" && (
-                          <Badge variant="outline" className="gap-1 border-amber-500 text-amber-500">
+                          <Badge variant="outline" className="gap-1 border-warning text-warning">
                             <Bell className="h-3 w-3" aria-hidden="true" />
                             {Math.round(percentage)}%
                           </Badge>
