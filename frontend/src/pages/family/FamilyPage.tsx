@@ -423,64 +423,63 @@ function FamilyPage() {
                   </div>
                 )}
               </div>
-
-              {user?.id && <FamilyChat familyId={family.id} currentUserId={user.id} />}
             </div>
 
-            {/* —— Escritorio: layout completo —— */}
-            <div className="hidden space-y-4 md:block">
-              <Card className="border-border/60">
-                <CardHeader>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <CardTitle className="text-base sm:text-lg">{family.name}</CardTitle>
-                      <CardDescription>
-                        {members.length} miembro{members.length === 1 ? "" : "s"}
-                        {isOwner ? " · Eres el propietario" : ""}
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setLeaveOpen(true)}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Salir de la familia
-                    </Button>
+            {/* —— Escritorio: tarjeta de familia —— */}
+            <Card className="hidden border-border/60 md:block">
+              <CardHeader>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle className="text-base sm:text-lg">{family.name}</CardTitle>
+                    <CardDescription>
+                      {members.length} miembro{members.length === 1 ? "" : "s"}
+                      {isOwner ? " · Eres el propietario" : ""}
+                    </CardDescription>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setLeaveOpen(true)}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Salir de la familia
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <h3 className="text-sm font-semibold text-foreground">Miembros</h3>
+                <MembersList members={members} currentUserId={user?.id} />
+              </CardContent>
+            </Card>
+
+            {/* Invitar (solo escritorio) + chat (única instancia) */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card className="hidden border-border/60 md:block">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                    Invitar miembro
+                  </CardTitle>
+                  <CardDescription>
+                    Busca por nombre de usuario. Solo aparecen personas sin familia.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">Miembros</h3>
-                  <MembersList members={members} currentUserId={user?.id} />
+                <CardContent>
+                  <InvitePanel
+                    invitee={invitee}
+                    onInviteeChange={setInvitee}
+                    inviting={inviting}
+                    onInvite={() => void handleInvite()}
+                    outgoing={outgoing}
+                    onCancelInvite={(id) => void handleCancelInvite(id)}
+                  />
                 </CardContent>
               </Card>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card className="border-border/60">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <UserPlus className="h-5 w-5 text-primary" />
-                      Invitar miembro
-                    </CardTitle>
-                    <CardDescription>
-                      Busca por nombre de usuario. Solo aparecen personas sin familia.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <InvitePanel
-                      invitee={invitee}
-                      onInviteeChange={setInvitee}
-                      inviting={inviting}
-                      onInvite={() => void handleInvite()}
-                      outgoing={outgoing}
-                      onCancelInvite={(id) => void handleCancelInvite(id)}
-                    />
-                  </CardContent>
-                </Card>
-
-                {user?.id && <FamilyChat familyId={family.id} currentUserId={user.id} />}
-              </div>
+              {user?.id && (
+                <FamilyChat familyId={family.id} currentUserId={user.id} />
+              )}
             </div>
           </>
         )}

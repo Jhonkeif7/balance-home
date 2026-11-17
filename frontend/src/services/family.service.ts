@@ -283,8 +283,10 @@ export function subscribeToMessages(
   familyId: string,
   onInsert: (msg: FamilyMessage) => void
 ) {
+  // Nombre único: evita choque si hay 2 montajes o un canal previo aún vivo.
+  const topic = `family-chat-${familyId}-${crypto.randomUUID()}`
   const channel = supabase
-    .channel(`family-chat-${familyId}`)
+    .channel(topic)
     .on(
       "postgres_changes",
       {
